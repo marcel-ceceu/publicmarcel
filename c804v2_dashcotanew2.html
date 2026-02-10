@@ -1,0 +1,5871 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Reposição - Decisão de Compras</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+  <style>
+/* ==========================================================
+   b99cotacompras2.css
+   Dashboard Reposição - Decisão de Compras
+   Versão: 2.0
+   ========================================================== */
+
+/* ==========================================================
+   TABLE OF CONTENTS
+   ==========================================================
+   #VARIABLES    - Variáveis CSS (:root)
+   #RESET        - Reset e estilos base
+   #LAYOUT       - Container, Card
+   #LOADING      - Loading, Toast, Flash
+   #TAGS         - Tags (categoria, decisão, prioridade)
+   #ROWS         - Cores de linha por status
+   #TOOLBAR      - Barra superior
+   #DROPDOWN     - Dropdown de colunas
+   #GRID         - Grid principal (wrapper, scroll)
+   #CELLS        - Células, header, badges
+   #TOOLTIP      - Tooltip de similares
+   #POPUP        - Popup de filtro
+   #FILTERS-BAR  - Barra de filtros ativos
+   #FOOTER       - Rodapé e paginação
+   ========================================================== */
+
+/* ==========================================================
+   VERSÃO 2.1 - Migração para AD_COTANEWHIST3
+   Atualizado: 04/02/2026
+   ========================================================== */
+
+/* #VARIABLES
+   ========================================================== */
+:root {
+  --ui-zoom: 1;
+
+  --bg: #ffffff;
+  --bg-alt: #f8f9fa;
+  --bg-page: #f1f3f5;
+  --bd: #e0e0e0;
+  --bd2: #d0d0d0;
+  --tx: #1a1a1a;
+  --tx-muted: #6b7280;
+  --pri: #1a73e8;
+  --pri-light: #e8f0fe;
+  --pri-dark: #1557b0;
+  --success: #1e8e3e;
+  --success-bg: #e6f4ea;
+  --warning: #f9ab00;
+  --warning-bg: #fef7e0;
+  --danger: #d93025;
+  --danger-bg: #fce8e6;
+  --info: #1a73e8;
+  --info-bg: #e8f0fe;
+
+  --row-height: 32px;
+  --head-height: 44px;
+  --filter-height: 30px;
+
+  --select-width: 50px;
+  --shadow: 0 4px 16px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* #RESET
+   ========================================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--tx);
+  background: var(--bg-page);
+  line-height: 1.12;
+  /* zoom removido - causava bug no tooltip */
+  padding: 0;
+  margin: 0;
+  height: 100vh;
+  overflow: visible;
+}
+
+/* #LAYOUT
+   ========================================================== */
+.container {
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#tabTable {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ==========================================================
+   UTILITÁRIOS
+   ========================================================== */
+.text-muted { color: var(--tx-muted); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-danger { color: var(--danger); }
+.font-mono { font-family: 'Consolas', 'Monaco', monospace; }
+
+/* #LOADING
+   ========================================================== */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--tx-muted);
+  font-size: 13px;
+}
+
+.loading::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--bd);
+  border-top-color: var(--pri);
+  border-radius: 50%;
+  margin-right: 10px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== TOAST ===== */
+.app-toast{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #111827;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .18s, transform .18s;
+  z-index: 4500;
+  pointer-events: none;
+  max-width: min(420px, calc(100vw - 32px));
+}
+.app-toast.show{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== FLASH OK ===== */
+.flash-ok{
+  outline: 2px solid var(--success);
+  box-shadow: 0 0 0 3px rgba(30,142,62,.15);
+}
+
+/* ==========================================================
+   FEEDBACK VISUAL SIMPLES
+   ========================================================== */
+.is-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.inline-success {
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--success);
+}
+
+.spinner-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--pri-light);
+  border-top-color: var(--pri);
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+/* #TAGS
+   ========================================================== */
+/* ===== AVATAR MARCA ===== */
+.marca-avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.marca-avatar-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.marca-avatar-nome {
+  font-weight: 500;
+}
+
+/* ===== TAG CATEGORIA ===== */
+.tag-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.tag-cat::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.tag-cat-repasse { background: #f3f4f6; color: #6b7280; }
+.tag-cat-repasse::before { background: #9ca3af; }
+.tag-cat-repo { background: #d1fae5; color: #065f46; }
+.tag-cat-repo::before { background: #10b981; }
+.tag-cat-devagar { background: #fef3c7; color: #92400e; }
+.tag-cat-devagar::before { background: #f59e0b; }
+.tag-cat-pendente { background: #dbeafe; color: #1e40af; }
+.tag-cat-pendente::before { background: #3b82f6; }
+
+/* ===== TAG DECISÃO ===== */
+.tag-dec {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.tag-dec-comprar { background: #d1fae5; color: #065f46; }
+.tag-dec-comprar::before { content: '✓'; }
+.tag-dec-analisar { background: #fef3c7; color: #92400e; }
+.tag-dec-analisar::before { content: '?'; }
+.tag-dec-descontinuar { background: #fee2e2; color: #991b1b; }
+.tag-dec-descontinuar::before { content: '✕'; }
+.tag-dec-geral { background: #f3f4f6; color: #6b7280; }
+.tag-dec-geral::before { content: '•'; }
+
+/* ===== TAG PRIORIDADE (Status de Compra) ===== */
+.tag-pri {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.tag-pri-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+.tag-pri-comprar {
+  background: #d1fae5;
+  color: #065f46;
+}
+.tag-pri-comprar .tag-pri-icon { color: #10b981; }
+
+.tag-pri-analisar {
+  background: #fef3c7;
+  color: #92400e;
+}
+.tag-pri-analisar .tag-pri-icon { color: #f59e0b; }
+
+.tag-pri-ok {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.tag-pri-ok .tag-pri-icon { color: #9ca3af; }
+
+.tag-pri-nao {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.tag-pri-nao .tag-pri-icon { color: #ef4444; }
+
+.tag-pri-geral {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ==========================================================
+   TAGS VISUAIS v2.2 - 04/02/2026
+   ========================================================== */
+
+/* STATUS - BOLINHAS */
+.status-dots { display:inline-flex; gap:4px; }
+.status-dots span { width:8px; height:8px; border-radius:50%; background:#e0e0e0; }
+.status-dots.alta span { background:#ef4444; }
+.status-dots.media span:nth-child(1), .status-dots.media span:nth-child(2) { background:#f59e0b; }
+.status-dots.baixa span:nth-child(1) { background:#9ca3af; }
+
+/* COTAÇÃO STATUS - PILL */
+.cot-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 10px 3px 4px; border-radius:20px; font-size:11px; font-weight:600; }
+.cot-pill .icon { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; }
+.cot-pill.comprar { background:#ecfdf5; color:#047857; }
+.cot-pill.comprar .icon { background:#d1fae5; }
+.cot-pill.analisar { background:#fffbeb; color:#b45309; }
+.cot-pill.analisar .icon { background:#fef3c7; }
+.cot-pill.descontinuar { background:#fef2f2; color:#b91c1c; }
+.cot-pill.descontinuar .icon { background:#fee2e2; }
+.cot-pill.repasse { background:#eff6ff; color:#1d4ed8; }
+.cot-pill.repasse .icon { background:#dbeafe; }
+.cot-pill.pendente { background:#f3f4f6; color:#6b7280; }
+.cot-pill.pendente .icon { background:#e5e7eb; }
+
+/* PERCEBIDO - PILL */
+.linha-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 10px 3px 4px; border-radius:20px; font-size:11px; font-weight:600; }
+.linha-pill .icon { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
+.linha-pill.ouro { background:#fffbf1; color:#8a6a1f; }
+.linha-pill.ouro .icon { background:#f9f1c7; }
+.linha-pill.prata { background:#f7f8fa; color:#5f6672; }
+.linha-pill.prata .icon { background:#eef0f3; }
+
+
+/* ===== 5. TAGS QUANTIDADE - BADGE COM BOLINHA ===== */
+.tag-qtd {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 2px solid;
+  min-width: 36px;
+  justify-content: center;
+}
+
+.tag-qtd-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.85); }
+}
+
+/* ZERO - Cinza sem bolinha */
+.tag-qtd.tag-qtd-zero {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+/* LOW (1-3) - Amarelo com bolinha */
+.tag-qtd.tag-qtd-low {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #b45309;
+}
+.tag-qtd.tag-qtd-low .tag-qtd-dot { background: #f59e0b; }
+
+/* HIGH (>3) - Vermelho com bolinha */
+.tag-qtd.tag-qtd-high {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+.tag-qtd.tag-qtd-high .tag-qtd-dot { background: #ef4444; }
+
+/* #ROWS
+   ========================================================== */
+/* ===== CORES DE LINHA: BASE ZEBRA ===== */
+.row-data {
+  background: #fff;
+}
+.row-data:nth-child(even) {
+  background: #fafafa;
+}
+
+/* ===== PRIORIDADE SEM SUGESTÃO ===== */
+/* CRITICO */
+.row-data[data-prioridade="1-CRITICO"]:not([data-sugestao]) {
+  background: #fff1f0 !important;
+}
+.row-data[data-prioridade="1-CRITICO"]:not([data-sugestao]):nth-child(even) {
+  background: #ffe4e1 !important;
+}
+
+/* ATENCAO */
+.row-data[data-prioridade="2-ATENCAO"]:not([data-sugestao]) {
+  background: #fffbe6 !important;
+}
+.row-data[data-prioridade="2-ATENCAO"]:not([data-sugestao]):nth-child(even) {
+  background: #fff7cc !important;
+}
+
+/* AVALIAR */
+.row-data[data-prioridade="4-AVALIAR"]:not([data-sugestao]) {
+  background: #e6f7ff !important;
+}
+.row-data[data-prioridade="4-AVALIAR"]:not([data-sugestao]):nth-child(even) {
+  background: #d1edff !important;
+}
+
+/* IGNORAR / REPASSE (sempre cinza, independente de sugestão) */
+.row-data[data-prioridade="8-IGNORAR"],
+.row-data[data-prioridade="9-REPASSE"] {
+  background: #f5f5f5 !important;
+  opacity: 0.85;
+}
+.row-data[data-prioridade="8-IGNORAR"]:nth-child(even),
+.row-data[data-prioridade="9-REPASSE"]:nth-child(even) {
+  background: #efefef !important;
+}
+.row-data[data-prioridade="8-IGNORAR"]:hover,
+.row-data[data-prioridade="9-REPASSE"]:hover {
+  opacity: 1;
+}
+
+/* ===== COM SUGESTÃO > 0 (verde, exceto ignorar/repasse) ===== */
+.row-data[data-sugestao]:not([data-prioridade="8-IGNORAR"]):not([data-prioridade="9-REPASSE"]) {
+  background: #ecfdf5 !important;
+}
+.row-data[data-sugestao]:not([data-prioridade="8-IGNORAR"]):not([data-prioridade="9-REPASSE"]):nth-child(even) {
+  background: #d1fae5 !important;
+}
+
+/* ===== HOVER ===== */
+.row-data:hover {
+  filter: brightness(0.97);
+}
+
+/* ===== SELECIONADO (sobrescreve tudo) ===== */
+.row-data.selected {
+  background: var(--pri-light) !important;
+  filter: none;
+}
+
+/* ===== TEXTO SEMI-BOLD NAS CÉLULAS DE DADOS ===== */
+.row-data .cell {
+  font-weight: 500;
+}
+
+/* #TOOLBAR
+   ========================================================== */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--bd);
+  background: var(--bg);
+}
+
+.toolbar-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--tx);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-header {
+  height: 54px;
+  width: auto;
+  display: inline-block;
+  object-fit: contain;
+  margin-right: 8px;
+}
+
+.r-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  background: var(--pri);
+}
+
+.toolbar-spacer { flex: 1; }
+
+.toolbar-search {
+  position: relative;
+}
+
+.toolbar-search input {
+  width: 280px;
+  height: 32px;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 0 12px 0 34px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.toolbar-search input:focus {
+  border-color: var(--pri);
+  box-shadow: 0 0 0 3px var(--pri-light);
+}
+
+.toolbar-search::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: var(--bg-alt);
+  border-color: var(--bd2);
+}
+
+.btn-primary {
+  background: var(--pri);
+  border-color: var(--pri);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--pri-dark);
+  border-color: var(--pri-dark);
+}
+
+/* #DROPDOWN
+   ========================================================== */
+/* ===== DROPDOWN COLUNAS ===== */
+.dropdown-cols { position: relative; }
+.dropdown-menu {
+  display: none; position: absolute; top: 100%; right: 0; margin-top: 4px;
+  background: #fff; border: 1px solid var(--bd); border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); padding: 8px 0;
+  min-width: 180px; max-height: 320px; overflow-y: auto; z-index: 100;
+}
+.dropdown-menu.show { display: block; }
+.dropdown-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+  cursor: pointer; font-size: 12px;
+}
+.dropdown-item:hover { background: #f5f5f5; }
+.dropdown-item input { accent-color: var(--pri); }
+
+/* #GRID
+   ========================================================== */
+.grid-wrapper {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.grid-scroll {
+  overflow: auto;
+  flex: 1;
+  height: 100%;
+}
+
+/* ==========================================================
+   LINHAS (CSS GRID)
+   ========================================================== */
+.row {
+  display: grid;
+  align-items: center;
+  min-width: max-content;
+  border-bottom: 1px solid var(--bd);
+}
+
+.row-header {
+  height: var(--head-height);
+  background: linear-gradient(180deg, #1a73e8 0%, #1557b0 100%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffffff;
+  border-bottom: 2px solid #0f4aa8;
+}
+
+.row-header .cell.drag-over {
+  background: rgba(255,255,255,0.18);
+}
+
+.row-header .cell.dragging-col {
+  opacity: 0.6;
+}
+
+.row-filter {
+  height: var(--filter-height);
+  background: var(--bg);
+  position: sticky;
+  top: var(--head-height);
+  z-index: 9;
+  border-bottom: 2px solid var(--bd);
+}
+
+.row-data {
+  height: var(--row-height);
+  background: var(--bg);
+  transition: background 0.15s;
+}
+
+.row-data:nth-child(even) {
+  background: #fafafa;
+}
+
+.row-data:hover {
+  background: #f0f4ff;
+}
+
+.row-data.selected {
+  background: var(--pri-light) !important;
+}
+
+/* #CELLS
+   ========================================================== */
+.cell {
+  padding: 4px 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+  font-family: var(--font);
+  letter-spacing: -0.2px;
+  line-height: 1.15;
+  border-right: 1px solid var(--bd);
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.row-header .cell {
+  font-size: 12px;
+  letter-spacing: 0;
+  padding: 0 6px;
+}
+
+.cell:last-child {
+  border-right: none;
+}
+
+/* Permite quebra de linha nas células do header (máx 2 linhas) */
+.row-header .cell {
+  white-space: normal;
+  overflow: visible;
+}
+
+.row-header .cell .header-label span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.cell-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.cell-center {
+  justify-content: center;
+  text-align: center;
+}
+
+/* ==========================================================
+   CHECKBOX (coluna de seleção)
+   ========================================================== */
+.cell-select {
+  justify-content: center;
+  padding: 0;
+}
+
+.cell-select input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--pri);
+}
+
+/* ==========================================================
+   CABEÇALHO DA COLUNA
+   ========================================================== */
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ========== DRAG HANDLE - 6 PONTINHOS ========== */
+.drag-handle {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 3px;
+  cursor: grab;
+  opacity: 0.25;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+.drag-handle:hover {
+  opacity: 0.6;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  opacity: 0.9;
+}
+
+.drag-handle .dots-row {
+  display: flex;
+  gap: 1px;
+}
+
+.drag-handle .dot {
+  width: 2px;
+  height: 2px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+}
+
+.drag-handle:hover .dot {
+  background: #fff;
+}
+
+.header-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.header-label:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.18);
+}
+
+/* ========== SORT INDICATOR (seta única colorida) ========== */
+.sort-indicator {
+  font-size: 8px;
+  margin-left: 2px;
+  flex-shrink: 0;
+  display: none;
+}
+
+.sort-indicator.active {
+  display: inline;
+}
+
+.sort-indicator.asc {
+  color: #93c5fd; /* Azul claro - visível no fundo azul */
+}
+
+.sort-indicator.desc {
+  color: #fca5a5; /* Vermelho claro - visível no fundo azul */
+}
+
+/* ==========================================================
+   BOTÃO FILTRO
+   ========================================================== */
+.filter-btn {
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  color: rgba(255,255,255,0.6);
+  font-size: 10px;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.filter-btn:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+.filter-btn.has-filter {
+  color: #fff;
+  background: rgba(255,255,255,0.28);
+}
+
+.filter-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* ==========================================================
+   RESIZER
+   ========================================================== */
+.resizer {
+  position: absolute;
+  right: -5px;
+  top: 0;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 10;
+}
+
+.resizer::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 25%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 50%;
+  background: transparent;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+
+.resizer:hover::after {
+  background: rgba(255,255,255,0.8);
+}
+
+/* ==========================================================
+   INPUT DE FILTRO RÁPIDO
+   ========================================================== */
+.filter-cell-wrap{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  width:100%;
+}
+
+.filter-input {
+  flex: 1;
+  height: 26px;
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 0;
+}
+
+.filter-input:focus {
+  border-color: var(--pri);
+  box-shadow: 0 0 0 2px var(--pri-light);
+}
+
+.filter-input::placeholder {
+  color: #aaa;
+}
+
+/* ==========================================================
+   BADGES (STATUS)
+   ========================================================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-warning { background: var(--warning-bg); color: var(--warning); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger); }
+.badge-info    { background: var(--info-bg);    color: var(--info); }
+.badge-muted   { background: #f3f4f6; color: #6b7280; }
+
+/* Destaques de colunas */
+.cell-custo-ultimo {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.cell-fornecedor {
+  font-weight: 700;
+}
+
+/* Destaque visual: LIN (linha) vs SIM (similar) */
+.row-data .cell-linha {
+  background: #fff7ed;
+  border-left: 3px solid #f59e0b;
+}
+
+.row-data .cell-similar {
+  background: #f5faff;
+  border-left: 3px solid #60a5fa;
+}
+
+.row-header .cell-linha {
+  box-shadow: inset 0 -3px 0 #f59e0b;
+}
+
+.row-header .cell-similar {
+  box-shadow: inset 0 -3px 0 #60a5fa;
+}
+
+/* #TOOLTIP
+   ========================================================== */
+/* ===== TOOLTIP SIMILARES (compacto) ===== */
+.lupa-similar { cursor: help; margin-left: 6px; font-size: 14px; opacity: 0.7; transition: opacity 0.2s; }
+.lupa-similar:hover, .lupa-similar.on { opacity: 1; }
+.tooltip-similar {
+  position: fixed;
+  display: none;
+  background: #fff;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  padding: 10px;
+  z-index: 10000;
+  min-width: 280px;
+  max-width: 420px;
+  font-size: 12px;
+}
+.tooltip-similar.show { display: block; }
+.tooltip-similar-header { font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #eee; margin-bottom: 4px; }
+.tooltip-similar * {
+  pointer-events: none;
+}
+
+/* Coluna Estoque: emoji + valor normal */
+.estoque-icon {
+  opacity: 0.75;
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+/* Coluna Sugestão: seta verde (indicador de compra) */
+.sugestao-arrow {
+  color: var(--success);
+  margin-right: 4px;
+  font-size: 12px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(30, 142, 62, 0.25));
+}
+
+/* ==========================================================
+   FASE 2: BOTÕES DE DECISÃO (COMENTADOS)
+   ========================================================== */
+.btns-decisao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+}
+
+.btn-dec {
+  flex: 1;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  color: #9ca3af;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.btn-dec svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.btn-dec:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.btn-dec:active {
+  transform: scale(0.95);
+}
+
+.btn-dec:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-dec.is-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.btn-dec-ignorar { background: #fee2e2; color: #fca5a5; }
+.btn-dec-analisar { background: #fef3c7; color: #fcd34d; }
+.btn-dec-processar { background: #d1fae5; color: #6ee7b7; }
+
+.btn-dec-ignorar.ativo {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+.btn-dec-analisar.ativo {
+  background: #f59e0b;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.btn-dec-processar.ativo {
+  background: #22c55e;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+}
+
+.btn-dec-ignorar:not(.ativo):hover { background: #fecaca; color: #f87171; }
+.btn-dec-analisar:not(.ativo):hover { background: #fde68a; color: #fbbf24; }
+.btn-dec-processar:not(.ativo):hover { background: #a7f3d0; color: #34d399; }
+
+/* ==========================================================
+   FASE 2: DROPDOWN EDITÁVEL (COMENTADO)
+   ========================================================== */
+/*
+.edit-select {
+  width: 100%;
+  height: 26px;
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  padding: 0 4px;
+  background: var(--bg);
+  transition: all 0.2s;
+}
+
+.edit-select:focus {
+  border-color: var(--pri);
+  box-shadow: 0 0 0 2px var(--pri-light);
+}
+
+.edit-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.categ-1 { background: #efebe9; color: #5d4037; border-color: #bcaaa4; }
+.categ-2 { background: #e6f4ea; color: #1e8e3e; border-color: #81c995; }
+.categ-3 { background: #fff8e1; color: #f57f17; border-color: #ffe082; }
+.categ-4 { background: #e8f0fe; color: #1a73e8; border-color: #90caf9; }
+*/
+
+/* #POPUP
+   ========================================================== */
+.popup {
+  position: fixed;
+  z-index: 1000;
+  min-width: 220px;
+  max-width: 300px;
+  background: var(--bg);
+  border: 1px solid var(--bd2);
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: none;
+}
+
+.popup.show { display: block; }
+
+.filter-popover-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--bd);
+  background: var(--bg-alt);
+  font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-popover-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--tx-muted);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.filter-popover-close:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.filter-sort-section {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--bd);
+  display: flex;
+  gap: 6px;
+}
+
+.sort-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  background: var(--bg);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.sort-btn:hover {
+  background: var(--bg-alt);
+  border-color: var(--bd2);
+}
+
+.sort-btn.active {
+  background: var(--pri-light);
+  border-color: var(--pri);
+  color: var(--pri-dark);
+}
+
+.filter-search {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--bd);
+}
+
+.filter-search input {
+  width: 100%;
+  height: 28px;
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.filter-search input:focus {
+  outline: none;
+  border-color: var(--pri);
+}
+
+.filter-actions {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--bd);
+  display: flex;
+  gap: 8px;
+  background: #fafafa;
+}
+
+.filter-action-btn {
+  background: none;
+  border: none;
+  color: var(--pri);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.filter-action-btn:hover {
+  background: var(--pri-light);
+  text-decoration: underline;
+}
+
+.filter-values {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.filter-value-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.filter-value-item:hover {
+  background: var(--bg-alt);
+}
+
+.filter-footer {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--bd);
+  background: #fafafa;
+}
+
+.filter-footer .btn { flex: 1; height: 28px; }
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--bd);
+  background: var(--bg-alt);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.popup-title {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+}
+
+.popup-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx-muted);
+  transition: background 0.2s;
+}
+
+.popup-close:hover { background: var(--bd); }
+
+.popup-section {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--bd);
+}
+.popup-section:last-of-type { border-bottom: none; }
+
+.popup-actions,
+.popup-sort {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.popup-actions .btn,
+.popup-sort .btn {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.popup-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tx-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.popup select,
+.popup input[type="text"] {
+  height: 32px;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 0 10px;
+  font-size: 12px;
+  outline: none;
+  background: var(--bg);
+}
+
+/* Lista de valores (checkboxes) */
+.value-search {
+  width: 100%;
+  height: 32px;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 0 10px;
+  font-size: 12px;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.value-search:focus { border-color: var(--pri); }
+
+.value-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 6px;
+}
+
+.value-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+
+.value-item:hover { background: var(--bg-alt); }
+
+.value-item input {
+  pointer-events: none;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pri);
+}
+
+.value-item span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value-count {
+  font-size: 11px;
+  color: var(--tx-muted);
+}
+
+/* Botões do popup */
+.popup-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-alt);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.popup-footer .btn { flex: 1; }
+
+/* #FILTERS-BAR
+   ========================================================== */
+.active-filters {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bd);
+  background: var(--bg-alt);
+}
+
+.active-filters.show { display: flex; }
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--pri-light);
+  color: var(--pri-dark);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.filter-tag .filter-tag-remove {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 115, 232, 0.15);
+  color: var(--pri-dark);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.filter-tag .filter-tag-remove:hover {
+  background: rgba(26, 115, 232, 0.3);
+}
+
+.filter-clear-all {
+  margin-left: auto;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  background: var(--bg);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tx-muted);
+  cursor: pointer;
+}
+
+.filter-clear-all:hover {
+  color: var(--tx);
+  background: var(--bg-alt);
+  border-color: var(--bd2);
+}
+
+/* Indicador de origem dos dados */
+.filter-tag-origin {
+  background: #e5e7eb;
+  color: #374151;
+  font-style: italic;
+  cursor: default;
+}
+
+.filter-tag-origin.origem-local {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.filter-tag-origin.origem-banco {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* #FOOTER
+   ========================================================== */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 10px;
+  border-top: 1px solid var(--bd);
+  background: var(--bg-alt);
+  font-size: 11px;
+  color: var(--tx-muted);
+}
+
+.footer-info { display: flex; align-items: center; gap: 6px; }
+.footer-spacer { flex: 1; }
+
+.pagination { display: flex; align-items: center; gap: 6px; }
+.pagination select {
+  height: 24px;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 0 6px;
+  font-size: 11px;
+  outline: none;
+  background: var(--bg);
+}
+.pagination button {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pagination button:hover:not(:disabled) {
+  background: var(--bg-alt);
+  border-color: var(--bd2);
+}
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.page-info { font-weight: 500; color: var(--tx); font-size: 11px; }
+
+/* =============================================
+   BOTÕES ICON - TOOLBAR
+   ============================================= */
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #e0e0e0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-icon i.material-icons {
+  font-size: 18px;
+  color: #555;
+  transition: color 0.2s ease, transform 0.3s ease;
+}
+
+.btn-icon::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transform: scale(0.8);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.btn-icon:hover {
+  background: transparent;
+  transform: scale(1.05);
+}
+
+.btn-icon:hover::after {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.btn-icon:hover i.material-icons {
+  transform: scale(1.1);
+}
+
+.btn-icon.cor-verde:hover i.material-icons { color: #2e7d32; }
+.btn-icon.cor-verde:hover::after { border-color: #2e7d32; }
+
+.btn-icon.cor-azul:hover i.material-icons { color: #1976d2; }
+.btn-icon.cor-azul:hover::after { border-color: #1976d2; }
+
+.btn-icon.cor-laranja:hover i.material-icons { color: #e65100; }
+.btn-icon.cor-laranja:hover::after { border-color: #e65100; }
+
+.btn-icon.rotate-hover:hover i.material-icons {
+  transform: rotate(180deg);
+}
+
+.btn-icon::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: #333;
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-family: Arial, sans-serif;
+  z-index: 100;
+}
+
+.btn-icon:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* =============================================
+   DATE RANGE PICKER - TOOLBAR
+   ============================================= */
+.date-range-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f5f5f5;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 0 10px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.date-range-wrapper:hover {
+  background: #e8e8e8;
+  border-color: var(--bd2);
+}
+
+.date-range-wrapper:focus-within {
+  border-color: var(--pri);
+  box-shadow: 0 0 0 2px var(--pri-light);
+}
+
+.date-range-wrapper i.material-icons {
+  font-size: 18px;
+  color: #666;
+}
+
+.date-range-wrapper input {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-family: var(--font);
+  color: var(--tx);
+  width: 150px;
+  cursor: pointer;
+  outline: none;
+}
+
+.date-range-wrapper input::placeholder {
+  color: #999;
+}
+
+/* =============================================
+   DATE QUICK BUTTONS
+   ============================================= */
+.date-quick-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.date-quick-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--tx);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.date-quick-btn:hover {
+  background: #f0f0f0;
+  border-color: var(--pri);
+  color: var(--pri);
+}
+
+.date-quick-btn.active {
+  background: var(--pri);
+  border-color: var(--pri);
+  color: #fff;
+}
+
+/* =============================================
+   BOTÃO PESQUISAR - AZUL COM LUPA
+   ============================================= */
+.btn-pesquisar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--pri);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-pesquisar i.material-icons {
+  font-size: 18px;
+}
+
+.btn-pesquisar:hover {
+  background: var(--pri-dark);
+  transform: scale(1.02);
+}
+
+.btn-pesquisar:active {
+  transform: scale(0.98);
+}
+
+.btn-pesquisar.is-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.btn-pesquisar.is-loading i.material-icons {
+  animation: spin 0.8s linear infinite;
+}
+
+/* =============================================
+   BOTÃO FILTRO RÁPIDO - TOGGLE STYLE
+   ============================================= */
+.btn-filtro-rapido {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: 2px solid #f59e0b;
+  border-radius: var(--radius);
+  background: #fff;
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-filtro-rapido i.material-icons {
+  font-size: 18px;
+}
+
+.btn-filtro-rapido:hover {
+  background: #fffbeb;
+  transform: scale(1.02);
+}
+
+.btn-filtro-rapido:active {
+  transform: scale(0.98);
+}
+
+.btn-filtro-rapido.active {
+  background: #f59e0b;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.btn-filtro-rapido.active:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+/* Litepicker customização */
+.litepicker {
+  font-family: var(--font) !important;
+}
+
+.litepicker .container__months {
+  box-shadow: var(--shadow-lg) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.litepicker .month-item-header {
+  font-weight: 600 !important;
+}
+
+.litepicker .day-item.is-in-range {
+  background-color: #1976d2 !important;
+  color: #fff !important;
+}
+
+.litepicker .day-item.is-start-date,
+.litepicker .day-item.is-end-date {
+  background-color: #1565c0 !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+.litepicker-quick-options {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f9f9f9;
+}
+
+.quick-option-card {
+  flex: 1;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-option-card:hover {
+  background: #f0f0f0;
+  border-color: #1976d2;
+  color: #1976d2;
+}
+
+.quick-option-card.active {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #fff;
+}
+
+.litepicker .container__footer {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  padding: 12px !important;
+}
+
+.litepicker .button-apply,
+.litepicker .button-cancel {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.litepicker .button-apply {
+  background-color: #1976d2 !important;
+}
+
+.litepicker .button-apply::before {
+  content: '✓';
+  font-size: 18px;
+  color: #fff;
+}
+
+.litepicker .button-apply:hover {
+  background-color: #1565c0 !important;
+  transform: scale(1.05);
+}
+
+.litepicker .button-cancel {
+  background-color: #e0e0e0 !important;
+}
+
+.litepicker .button-cancel::before {
+  content: '✕';
+  font-size: 18px;
+  color: #555;
+}
+
+.litepicker .button-cancel:hover {
+  background-color: #bdbdbd !important;
+  transform: scale(1.05);
+}
+
+.litepicker .day-item.is-selected {
+  background-color: #1565c0 !important;
+  color: #fff !important;
+}
+
+/* ==========================================================
+   #COMENTARIOS - Popover + indicador + resolve
+   ========================================================== */
+
+/* Wrapper da célula DESCRPROD com ícone */
+.cell-comment-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0;
+}
+.cell-comment-wrap .desc-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Ícone de comentário — oculto por padrão, aparece no hover da linha */
+.comment-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 0.15s;
+  position: relative;
+}
+.comment-icon:hover { background: rgba(0,0,0,0.06); }
+
+/* Com comentários pendentes: azul + triângulo amarelo */
+.comment-icon.has-comments {
+  display: flex;
+  color: #1a73e8;
+}
+.comment-icon.has-comments::after {
+  content: '';
+  position: absolute;
+  top: -2px; right: -2px;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 7px 7px 0;
+  border-color: transparent #f9ab00 transparent transparent;
+}
+
+/* Todos resolvidos: verde sem triângulo */
+.comment-icon.all-resolved {
+  display: flex;
+  color: #1e8e3e;
+}
+.comment-icon.all-resolved::after { display: none; }
+
+/* Hover na row: mostra ícone vazio */
+.row-data:hover .comment-icon { display: flex; color: #9ca3af; }
+.row-data:hover .comment-icon.has-comments { color: #1a73e8; }
+.row-data:hover .comment-icon.all-resolved { color: #1e8e3e; }
+
+/* ===== POPOVER ===== */
+.comment-popover {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  width: 340px;
+  max-height: 420px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font);
+}
+.comment-popover.show { display: flex; }
+
+.comment-pop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e8eaed;
+  background: #f8f9fa;
+}
+.comment-pop-header span { font-size: 12px; font-weight: 600; color: #1f2937; }
+.comment-pop-close {
+  background: none; border: none; cursor: pointer;
+  font-size: 18px; color: #5f6368; padding: 2px 6px;
+  border-radius: 4px; line-height: 1;
+}
+.comment-pop-close:hover { background: #e8eaed; }
+.comment-pop-body { flex: 1; overflow-y: auto; max-height: 280px; padding: 0; }
+
+/* Item individual de comentário */
+.comment-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f3f4;
+  transition: background 0.2s, opacity 0.3s;
+}
+.comment-item:last-child { border-bottom: none; }
+.comment-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.comment-item-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; text-transform: uppercase;
+}
+.comment-item-content { flex: 1; min-width: 0; }
+.comment-item-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+.comment-item-name { font-size: 12px; font-weight: 600; color: #1f2937; }
+.comment-item-date { font-size: 10px; color: #9ca3af; margin-left: auto; }
+.comment-item-text {
+  font-size: 12px; color: #374151;
+  line-height: 1.45; word-break: break-word;
+}
+
+/* Botão check resolver */
+.comment-resolve-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; flex-shrink: 0;
+  border: 2px solid #d1d5db; border-radius: 50%;
+  background: none; cursor: pointer;
+  transition: all 0.2s; margin-top: 2px;
+}
+.comment-resolve-btn:hover { border-color: #1e8e3e; background: #e6f4ea; }
+.comment-resolve-btn svg {
+  width: 13px; height: 13px; fill: none;
+  stroke: #d1d5db; stroke-width: 2.5;
+  stroke-linecap: round; stroke-linejoin: round;
+  transition: stroke 0.2s;
+}
+.comment-resolve-btn:hover svg { stroke: #1e8e3e; }
+
+/* Estado resolvido */
+.comment-item.resolved { background: #f9fafb; opacity: 0.6; }
+.comment-item.resolved .comment-item-text { text-decoration: line-through; color: #9ca3af; }
+.comment-item.resolved .comment-item-name { color: #9ca3af; }
+.comment-item.resolved .comment-item-avatar { background: #d1d5db; }
+.comment-item.resolved .comment-resolve-btn { border-color: #1e8e3e; background: #e6f4ea; }
+.comment-item.resolved .comment-resolve-btn svg { stroke: #1e8e3e; }
+.comment-item.resolved .resolved-label { display: inline; }
+.resolved-label { display: none; font-size: 10px; color: #1e8e3e; font-weight: 600; margin-left: 4px; }
+
+/* Empty state e footer do popover */
+.comment-pop-empty {
+  padding: 24px 14px; text-align: center;
+  color: #9ca3af; font-size: 12px; line-height: 1.5;
+}
+.comment-pop-footer {
+  padding: 10px 14px;
+  border-top: 1px solid #e8eaed;
+  background: #f8f9fa;
+}
+.comment-pop-footer input {
+  width: 100%; padding: 8px 10px;
+  border: 1px solid #dadce0; border-radius: 8px;
+  font-size: 12px; font-family: var(--font);
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.comment-pop-footer input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+}
+.comment-pop-footer input::placeholder { color: #bbb; }
+
+</style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="card">
+      <!-- ==================== TOOLBAR ==================== -->
+      <div class="toolbar">
+        <div class="toolbar-title">
+          <img class="logo-header" src="https://i.ibb.co/7tDmPNcX/2.png" alt="Auto Peças São Paulo">
+          <span>📦</span>
+          <span>Reposição - Decisão de Compras (v2.0)</span>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <div class="toolbar-search">
+          <input type="text" id="globalSearch" placeholder="Pesquisar em todas as colunas...">
+        </div>
+        <div class="date-quick-buttons" id="dateQuickButtons">
+          <button class="date-quick-btn" data-range="hoje" title="Hoje">Hoje</button>
+          <button class="date-quick-btn" data-range="ontem" title="Ontem">Ontem</button>
+          <button class="date-quick-btn" data-range="ult7dias" title="Últimos 7 dias">Últ. 7 Dias</button>
+        </div>
+        <div class="date-range-wrapper" id="dateRangeWrapper">
+          <i class="material-icons">date_range</i>
+          <input type="text" id="inputDateRange" readonly placeholder="Período DTNEG...">
+        </div>
+        <button class="btn-pesquisar" id="btnPesquisar" title="Pesquisar com filtro de período">
+          <i class="material-icons">search</i>
+          <span>Pesquisar</span>
+        </button>
+        <button class="btn-filtro-rapido" id="btnFiltroRapido" title="Filtro Rápido: Sugestão > 0, exclui códigos específicos e produtos CALOTA/TAPETE/ARREBITE">
+          <i class="material-icons">bolt</i>
+          <span>Filtro Rápido</span>
+        </button>
+        <button class="btn-filtro-rapido" id="btnACompras" title="Mostrar apenas itens com decisão ANALISAR ou PROCESSAR">
+          <i class="material-icons">shopping_cart</i>
+          <span>A COMPRAS</span>
+        </button>
+        <div class="dropdown-cols">
+          <button class="btn-icon cor-azul" id="btnToggleCols" data-tooltip="Colunas">
+            <i class="material-icons">view_column</i>
+          </button>
+          <div class="dropdown-menu" id="menuCols"></div>
+        </div>
+        <button class="btn-icon cor-verde rotate-hover" id="btnRefresh" data-tooltip="Atualizar">
+          <i class="material-icons">refresh</i>
+        </button>
+        <button class="btn-icon cor-laranja" id="btnClear" data-tooltip="Limpar Filtros">
+          <i class="material-icons">filter_alt_off</i>
+        </button>
+        <button class="btn-icon cor-azul" id="btnExport" data-tooltip="Exportar">
+          <i class="material-icons">file_download</i>
+        </button>
+        <button class="btn-icon cor-azul" id="btnExportTxt" data-tooltip="Exportar TXT">
+          <i class="material-icons">description</i>
+        </button>
+        <button class="btn-icon cor-verde" id="btnExportXls" data-tooltip="Exportar XLS">
+          <i class="material-icons">grid_on</i>
+        </button>
+      </div>
+
+      <!-- ==================== TABELA ==================== -->
+      <div id="tabTable">
+        <!-- ==================== ACTIVE FILTERS BAR ==================== -->
+        <div class="active-filters" id="activeFiltersBar"></div>
+        <!-- ==================== GRID ==================== -->
+        <div class="grid-wrapper">
+          <div class="grid-scroll" id="gridScroll">
+            <div class="loading" id="loading">Carregando dados...</div>
+          </div>
+        </div>
+
+        <!-- ==================== FOOTER ==================== -->
+        <div class="footer">
+          <div class="footer-info">
+            <span id="selectionInfo">0 selecionado(s)</span>
+            <span class="text-muted">|</span>
+            <span id="totalInfo">0 registros</span>
+          </div>
+          <div class="footer-spacer"></div>
+          <div class="pagination">
+            <span>Exibir:</span>
+            <select id="pageSize">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+            </select>
+            <button id="btnPrev">◀ Anterior</button>
+            <span class="page-info" id="pageInfo">1 de 1</span>
+            <button id="btnNext">Próximo ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== POPUP DE FILTRO ==================== -->
+  <div class="popup filter-popover" id="popup"></div>
+
+  <!-- ==================== TOOLTIP SIMILARES ==================== -->
+  <div class="tooltip-similar" id="tooltipSimilar"></div>
+
+  <!-- ==================== POPOVER COMENTÁRIOS ==================== -->
+  <div class="comment-popover" id="commentPopover">
+    <div class="comment-pop-header">
+      <span id="commentPopTitle">Comentários</span>
+      <button class="comment-pop-close" onclick="DASH.fecharComentarios()">&times;</button>
+    </div>
+    <div class="comment-pop-body" id="commentPopBody"></div>
+    <div class="comment-pop-footer">
+      <input type="text" id="commentInput" placeholder="Comentar... (Enter para salvar)" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="app-toast" id="appToast"></div>
+
+  <!-- ==================== BIBLIOTECA SANKHYA JX ==================== -->
+  <script src="https://cdn.jsdelivr.net/gh/wansleynery/SankhyaJX/jx.min.js"></script>
+  <script>
+/* ==========================================================
+   b99cotacompras2.js
+   Dashboard Reposição - Decisão de Compras
+   Versão: 2.0
+   ========================================================== */
+
+/* ==========================================================
+   TABLE OF CONTENTS
+   ==========================================================
+   #CONFIG       - Configurações, colunas, constantes (EDITE AQUI)
+   #DOM          - Cache de elementos DOM
+   #DATA         - Carregamento e normalização de dados
+   #FILTERS      - Filtros, popup, persistência
+   #PAGINATION   - Paginação
+  #RENDER       - Renderização da tabela
+   #EXPORT       - Exportação CSV
+   #MAIN         - Inicialização e bindings
+   ========================================================== */
+
+/* ==========================================================
+   #CONFIG - ALTERE AQUI PRIMEIRO
+   ========================================================== 
+   Este bloco contém todas as configurações do dashboard.
+   90% das alterações do dia-a-dia serão feitas aqui.
+   ========================================================== */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+
+  // ============================================================
+  // VERSÃO 2.1 - MIGRAÇÃO PARA AD_COTANEWHIST3
+  // Data: 04/02/2026
+  // ============================================================
+  DASH.VERSION = '2.2';
+  console.log('[DASH Cotações] VERSAO-2.2-JXSALVAR carregada');
+
+
+  // ============================================================
+  // LOGOS DAS MARCAS (por código)
+  // ============================================================
+  DASH.LOGOS_MARCA = {
+    750: "https://i.ibb.co/YBRKrRc1/aplic.png",
+    1326: "https://i.ibb.co/Y71pYdnN/axios.png",
+    850: "https://i.ibb.co/xt4d7Swp/cofap.png",
+    1006: "https://i.ibb.co/99Xk2pSK/continental.png",
+    1346: "https://i.ibb.co/Kj0WtYgg/controil.png",
+    1028: "https://i.ibb.co/nNkd66w8/corven.png",
+    1000: "https://i.ibb.co/N4FLk3G/driveway.png",
+    1118: "https://i.ibb.co/Nd0ppg3D/efrari.png",
+    1352: "https://i.ibb.co/7tLbsCP1/florio.png",
+    1254: "https://i.ibb.co/Kc88zCbR/frasle.png",
+    934: "https://i.ibb.co/Z65sJ437/gates.png",
+    1287: "https://i.ibb.co/0jPjxTZQ/hipperfreios.png",
+    1349: "https://i.ibb.co/0jPjxTZQ/hipperfreios.png",
+    758: "https://i.ibb.co/5gyKbYxD/lonaflex.png",
+    1268: "https://i.ibb.co/mVXc5qmN/marflex.png",
+    770: "https://i.ibb.co/WN3XVBXG/mobensani.png",
+    1333: "https://i.ibb.co/x8h7hhYm/perfect.png",
+    116: "https://i.ibb.co/sdyn8sjY/sabo.png",
+    1112: "https://i.ibb.co/8nHJPK3p/sampel.png",
+    759: "https://i.ibb.co/wxz0WgM/syl.png",
+    1108: "https://i.ibb.co/HfcsJBJd/tecfil.png",
+    1334: "https://i.ibb.co/gLxtzPLJ/trw.png",
+    760: "https://i.ibb.co/TBRgbtGF/tuba.png",
+    950: "https://i.ibb.co/1fzgQ5F3/urba.png",
+    997: "https://i.ibb.co/GvfpL8fG/visconde.png",
+    866: "https://i.ibb.co/G4p9gJHm/yimming.png"
+  };
+
+  // ============================================================
+  // CHAVES / CONSTANTES
+  // ============================================================
+  DASH.FILTERS_STORAGE_KEY = 'c78_dash_filters_v2';
+  DASH.DEFAULT_SORT = { key: 'DTNEG', dir: 'desc' };
+
+
+  // ============================================================
+  // DEFINIÇÃO DAS COLUNAS (CONFIGURAÇÃO PADRÃO)
+  // Atualizado: 04/02/2026
+  // ============================================================
+  DASH.COLS = [
+    // === COLUNAS VISÍVEIS (19 colunas) ===
+    { key: 'CODPROD', label: 'Cód. Produto', width: 60, align: 'right', type: 'integer', visible: true },
+    { key: 'DTNEG', label: 'Dt. Neg.', width: 107, align: 'center', type: 'date', visible: true },
+    { key: 'COMPLDESC', label: 'Referência', width: 140, align: 'left', visible: true },
+    { key: 'MARCA', label: 'Marca', width: 137, align: 'left', visible: true },
+    { key: 'REFFORN', label: 'cod. original', width: 103, align: 'left', visible: true },
+    { key: 'DESCRPROD', label: 'Produto', width: 349, align: 'left', visible: true },
+    { key: 'LIN_VEN_ABC', label: 'Curva ABC', width: 90, align: 'center', type: 'curva', visible: true },
+    { key: 'PERCEBIDO', label: 'Percebido', width: 96, align: 'right', type: 'number', visible: true },
+    { key: 'COTACAO_STATUS', label: 'Cotação Status', width: 150, align: 'center', visible: true },
+    { key: 'PRIORIDADE', label: 'Status', width: 95, align: 'center', visible: true },
+    { key: 'SUGESTAO_QTD', label: 'Sugestão', width: 92, align: 'right', type: 'number', visible: true },
+    { key: 'LIN_ETQTT', label: 'Etq. Linha', width: 94, align: 'right', type: 'number', visible: true },
+    { key: 'SIM_ETQTT', label: 'Etq. Similar', width: 102, align: 'right', type: 'number', visible: true },
+    { key: 'DECISAO', label: 'Decisão', width: 140, align: 'center', type: 'decisao', visible: true, editable: true },
+    { key: 'STATUSREP', label: 'Status Rep', width: 110, align: 'center', visible: false },
+    { key: 'LIN_VEN_QTDLIQ_TT', label: 'Vend TT', width: 74, align: 'right', type: 'number', visible: true },
+    { key: 'LIN_VEN_MED3MES_QTD', label: 'Média 3M Qtd', width: 74, align: 'right', type: 'number', visible: true },
+    { key: 'ORG_COM_DTULTCOM', label: 'Dt. Últ. Com.', width: 110, align: 'center', type: 'date', visible: true },
+    { key: 'ORG_COM_ULTCUSTO', label: 'Últ. Custo', width: 110, align: 'right', type: 'currency', visible: true }
+  ];
+
+  // ============================================================
+  // ESTADO GLOBAL
+  // ============================================================
+  DASH.state = {
+    sort: { key: 'DTNEG', dir: 'desc' },
+    globalSearch: '',
+    quickFilters: {},
+    menuFilters: {},
+    selectedIds: new Set(),
+    currentPage: 1,
+    pageSize: 50,
+    dragColumn: null,
+    dataOrigin: 'banco',
+    dateRange: {
+      dtIni: null,
+      dtFim: null
+    },
+    filtroRapido: false,
+    filtroACompras: false
+  };
+
+  DASH.DATA = [];
+  DASH.DATA_FULL = [];
+  DASH.DATE_FIELDS = [
+    'DTNEG',
+    'ORG_COM_DTULTCOM'
+  ];
+
+  // ============================================================
+  // UTILITÁRIOS
+  // ============================================================
+  DASH.util = {};
+
+  DASH.util.normalize = function(v) {
+    return (v == null ? '' : v).toString();
+  };
+
+  DASH.util.isBlank = function(v) {
+    return DASH.util.normalize(v).trim() === '';
+  };
+
+  DASH.util.clamp = function(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  };
+
+  DASH.util.escapeHtml = function(s) {
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return DASH.util.normalize(s).replace(/[&<>"']/g, function(m) { return map[m]; });
+  };
+
+  DASH.util.safeStringify = function(obj) {
+    try { return JSON.stringify(obj); } catch (e) {}
+    try { return String(obj); } catch (e) {}
+    return '[obj]';
+  };
+
+  DASH.util.getErrorMessage = function(err) {
+    if (!err) return 'Erro desconhecido';
+    if (typeof err === 'string') return err;
+    return err.responseText || err.statusMessage || err.message || DASH.util.safeStringify(err);
+  };
+
+  DASH.util.parsePtNumber = function(value) {
+    if (value == null) return 0;
+    if (typeof value === 'number') return isFinite(value) ? value : 0;
+    var s = String(value).trim();
+    if (!s) return 0;
+    var cleaned = s.replace(/[^\d.,-]/g, '');
+    var normalized = cleaned.replace(/\./g, '').replace(',', '.');
+    var n = Number(normalized);
+    return isFinite(n) ? n : 0;
+  };
+
+  // ============================================================
+  // MEDIÇÃO DE LARGURA DE TEXTO (para resize inteligente)
+  // ============================================================
+  DASH.util._measureCanvas = null;
+  DASH.util._measureCtx = null;
+
+  DASH.util.measureText = function(text, fontSize, fontFamily) {
+    fontSize = fontSize || 11;
+    fontFamily = fontFamily || "'Segoe UI', 'Arial Narrow', system-ui, sans-serif";
+
+    if (!DASH.util._measureCanvas) {
+      DASH.util._measureCanvas = document.createElement('canvas');
+      DASH.util._measureCtx = DASH.util._measureCanvas.getContext('2d');
+    }
+
+    DASH.util._measureCtx.font = fontSize + 'px ' + fontFamily;
+    return DASH.util._measureCtx.measureText(String(text || '')).width;
+  };
+
+  // Trata estoque negativo como 0 para exibição
+  DASH.util.estoqueExibir = function(val) {
+    var n = Number(val) || 0;
+    return n > 0 ? n : 0;
+  };
+
+  // Trata estoque negativo como 0
+  DASH.util.estoquePositivo = function(val) {
+    var n = DASH.util.parsePtNumber(val);
+    return n > 0 ? n : 0;
+  };
+
+  /**
+   * Converte string de data para timestamp comparável
+   * Suporta formatos: DD/MM/YYYY, YYYY-MM-DD, DDMMYYYY
+   * Retorna 0 se inválido (para ordenação segura)
+   */
+  DASH.util.parseDataParaTimestamp = function(valor) {
+    if (valor == null || valor === '' || valor === undefined) return 0;
+    
+    var str = String(valor).trim();
+    if (str === '') return 0;
+    
+    var d, m, y;
+    
+    // Formato ISO: YYYY-MM-DD ou YYYY-MM-DD HH:MI:SS
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+      var partes = str.substring(0, 10).split('-');
+      y = parseInt(partes[0], 10);
+      m = parseInt(partes[1], 10) - 1;
+      d = parseInt(partes[2], 10);
+    }
+    // Formato BR: DD/MM/YYYY ou DD/MM/YYYY HH:MI:SS
+    else if (/^\d{2}\/\d{2}\/\d{4}/.test(str)) {
+      var partes = str.substring(0, 10).split('/');
+      d = parseInt(partes[0], 10);
+      m = parseInt(partes[1], 10) - 1;
+      y = parseInt(partes[2], 10);
+    }
+    // Formato compacto: DDMMYYYY
+    else if (/^\d{8}$/.test(str)) {
+      d = parseInt(str.substring(0, 2), 10);
+      m = parseInt(str.substring(2, 4), 10) - 1;
+      y = parseInt(str.substring(4, 8), 10);
+    }
+    else {
+      return 0;
+    }
+    
+    // Validação básica de valores de data
+    if (isNaN(y) || isNaN(m) || isNaN(d) || y < 1900 || y > 2100 || m < 0 || m > 11 || d < 1 || d > 31) {
+      return 0;
+    }
+    
+    var dt = new Date(y, m, d);
+    return isNaN(dt.getTime()) ? 0 : dt.getTime();
+  };
+
+  /**
+   * Pré-processa datas para timestamp e evita parse repetido
+   */
+  DASH.preparseDatas = function(rows) {
+    if (!rows || rows.length === 0) return;
+    var fields = DASH.DATE_FIELDS || [];
+    if (fields.length === 0) return;
+
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (!row) continue;
+      for (var j = 0; j < fields.length; j++) {
+        var campo = fields[j];
+        var tsKey = campo + '_TS';
+        if (Object.prototype.hasOwnProperty.call(row, tsKey)) continue;
+        var val = row[campo];
+        if (val == null || val === '') {
+          row[tsKey] = 0;
+          continue;
+        }
+        row[tsKey] = DASH.util.parseDataParaTimestamp(val);
+      }
+    }
+  };
+
+  // ============================================================
+  // AMOSTRAGEM DISTRIBUÍDA (para auto-fit)
+  // ============================================================
+  DASH.util.pegarAmostra = function(arr, tamanho) {
+    tamanho = tamanho || 100;
+    
+    // Se array menor ou igual ao tamanho, retorna tudo
+    if (!arr || arr.length <= tamanho) {
+      return arr ? arr.slice() : [];
+    }
+    
+    var amostra = [];
+    var passo = Math.floor(arr.length / tamanho);
+    
+    // Pega elementos distribuídos: 0, passo, 2*passo, ...
+    for (var i = 0; i < arr.length && amostra.length < tamanho; i += passo) {
+      amostra.push(arr[i]);
+    }
+    
+    // Garante que o último elemento está incluído (pode ter valor longo)
+    var ultimo = arr[arr.length - 1];
+    if (amostra.indexOf(ultimo) === -1) {
+      amostra.push(ultimo);
+    }
+    
+    return amostra;
+  };
+
+  // ===== CORES DE MARCA (paleta expandida) =====
+  DASH.util.CORES_MARCA = [
+    '#1565c0', '#2e7d32', '#c62828', '#6a1b9a', '#00838f',
+    '#ef6c00', '#4527a0', '#00695c', '#ad1457', '#283593',
+    '#00796b', '#5d4037', '#455a64', '#7b1fa2', '#0277bd'
+  ];
+
+  DASH.util.corMarca = function(nome) {
+    var str = DASH.util.normalize(nome).toUpperCase();
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return DASH.util.CORES_MARCA[Math.abs(hash) % DASH.util.CORES_MARCA.length];
+  };
+
+  DASH.util.htmlMarca = function(nome, codMarca) {
+    var n = DASH.util.normalize(nome).trim();
+    if (!n) return '<span class="text-muted">—</span>';
+    
+    // Verifica se tem logo cadastrado para esta marca
+    var urlLogo = DASH.LOGOS_MARCA[codMarca] || null;
+    
+    if (urlLogo) {
+      // Com logo: exibe imagem + nome
+      return '<div class="marca-avatar">' +
+        '<img src="' + urlLogo + '" alt="' + DASH.util.escapeHtml(n) + '" ' +
+        'style="width:24px;height:24px;object-fit:contain;border-radius:4px;" ' +
+        'onerror="this.style.display=\'none\'">' +
+        '<span class="marca-avatar-nome">' + DASH.util.escapeHtml(n) + '</span>' +
+        '</div>';
+    }
+    
+    // Sem logo: exibe avatar colorido com iniciais (comportamento original)
+    var cor = DASH.util.corMarca(n);
+    var iniciais = n.substring(0, 2).toUpperCase();
+    return '<div class="marca-avatar">' +
+      '<span class="marca-avatar-icon" style="background:' + cor + '">' + iniciais + '</span>' +
+      '<span class="marca-avatar-nome">' + DASH.util.escapeHtml(n) + '</span>' +
+      '</div>';
+  };
+
+
+  // ===== TAG QUANTIDADE (Badge com Bolinha) =====
+  DASH.util.htmlTagQuantidade = function(valor) {
+    var num = DASH.util.parsePtNumber(valor);
+    var formatted = DASH.util.formatValue(valor, 'number');
+    
+    if (num === 0 || isNaN(num)) {
+      // ZERO - cinza, sem bolinha
+      return '<span class="tag-qtd tag-qtd-zero">' +
+        '<span>' + formatted + '</span>' +
+        '</span>';
+    }
+    
+    if (num >= 1 && num <= 3) {
+      // LOW (1-3) - amarelo com bolinha
+      return '<span class="tag-qtd tag-qtd-low">' +
+        '<span class="tag-qtd-dot"></span>' +
+        '<span>' + formatted + '</span>' +
+        '</span>';
+    }
+    
+    // HIGH (>3) - vermelho com bolinha
+    return '<span class="tag-qtd tag-qtd-high">' +
+      '<span class="tag-qtd-dot"></span>' +
+      '<span>' + formatted + '</span>' +
+      '</span>';
+  };
+
+  DASH.util.htmlDecisao = function(valor) {
+    var v = DASH.util.normalize(valor).toUpperCase().trim();
+    if (!v) return '<span class="text-muted">—</span>';
+    
+    var mapa = {
+      'COMPRAR': { classe: 'tag-dec-comprar', label: 'Comprar' },
+      'PROCESSAR': { classe: 'tag-dec-comprar', label: 'Processar' },
+      'ANALISAR': { classe: 'tag-dec-analisar', label: 'Analisar' },
+      'DESCONTINUAR': { classe: 'tag-dec-descontinuar', label: 'Descontinuar' },
+      'IGNORAR': { classe: 'tag-dec-descontinuar', label: 'Ignorar' }
+    };
+    
+    var cfg = mapa[v] || { classe: 'tag-dec-geral', label: valor };
+    return '<span class="tag-dec ' + cfg.classe + '">' + DASH.util.escapeHtml(cfg.label) + '</span>';
+  };
+
+  // ============================================================
+  // FILTRO COTAÇÃO RÁPIDA: FUNÇÕES
+  // ============================================================
+  
+
+  DASH.util.htmlStatusPrioridade = function(valor) {
+    var v = DASH.util.normalize(valor).toUpperCase().trim();
+    if (!v || v === '(NULL)') return '<span class="text-muted">—</span>';
+    var classe = '';
+    if (v === 'ALTA') classe = 'alta';
+    else if (v === 'MEDIA') classe = 'media';
+    else if (v === 'BAIXA') classe = 'baixa';
+    return '<span class="status-dots ' + classe + '"><span></span><span></span><span></span></span>';
+  };
+
+  DASH.util.htmlCotacaoStatus = function(valor) {
+    var v = DASH.util.normalize(valor).toUpperCase().trim();
+    if (!v || v === '(NULL)') return '<span class="cot-pill pendente"><span class="icon">○</span>PENDENTE</span>';
+    var cfg;
+    if (v.indexOf('COMPRAR') > -1 && v.indexOf('DESCONTINUAR') === -1) cfg = { classe:'comprar', icone:'▲', label:'COMPRAR' };
+    else if (v.indexOf('DESCONTINUAR') > -1) cfg = { classe:'descontinuar', icone:'✕', label:'DESCONTINUAR' };
+    else if (v.indexOf('ANALISE') > -1) cfg = { classe:'analisar', icone:'◆', label:'ANALISAR' };
+    else if (v.indexOf('REPASSE') > -1) cfg = { classe:'repasse', icone:'→', label:'REPASSE' };
+    else cfg = { classe:'pendente', icone:'○', label:'PENDENTE' };
+    return '<span class="cot-pill ' + cfg.classe + '"><span class="icon">' + cfg.icone + '</span>' + cfg.label + '</span>';
+  };
+
+  DASH.util.htmlPercebido = function(valor) {
+    var v = DASH.util.normalize(valor).trim();
+    if (!v || v === '(NULL)') return '<span class="text-muted">—</span>';
+    var num = parseInt(v, 10);
+    if (num === 1) return '<span class="linha-pill ouro"><span class="icon">1</span>1ª LINHA</span>';
+    if (num === 2) return '<span class="linha-pill prata"><span class="icon">2</span>2ª LINHA</span>';
+    return '<span class="text-muted">—</span>';
+  };
+
+  // ============================================================
+  // FORMATAÇÃO DE VALORES
+  // ============================================================
+  DASH.util.formatValue = function(value, type) {
+    if (DASH.util.isBlank(value)) return '';
+
+    switch (type) {
+      case 'date': {
+        var strValue = DASH.util.normalize(value).trim();
+        if (!strValue) return '';
+        
+        // Formato DD/MM/YYYY ou DD/MM/YYYY HH:MI:SS (já vem formatado do Oracle)
+        if (/^\d{2}\/\d{2}\/\d{4}/.test(strValue)) {
+          return strValue.substring(0, 10);
+        }
+        
+        // Formato DDMMYYYY (sem barras)
+        if (/^\d{8}/.test(strValue)) {
+          var dia = strValue.substring(0, 2);
+          var mes = strValue.substring(2, 4);
+          var ano = strValue.substring(4, 8);
+          return dia + '/' + mes + '/' + ano;
+        }
+        
+        // Formato ISO: YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}/.test(strValue)) {
+          var partes = strValue.substring(0, 10).split('-');
+          return partes[2] + '/' + partes[1] + '/' + partes[0];
+        }
+        
+        // Fallback: retorna como está (NÃO usa new Date)
+        return DASH.util.escapeHtml(strValue);
+      }
+
+      case 'currency':
+        return 'R$ ' + Number(value).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+      case 'integer': {
+        var n = Number(value);
+        return isFinite(n) ? String(Math.round(n)) : '';
+      }
+
+      case 'number':
+        return Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+      case 'decimal':
+        return Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      case 'curva': {
+        var curvaClasses = { 'A': 'badge-danger', 'B': 'badge-warning', 'C': 'badge-info' };
+        return '<span class="badge ' + (curvaClasses[value] || 'badge-muted') + '">' + DASH.util.escapeHtml(value) + '</span>';
+      }
+
+      case 'status': {
+        // PRIORIDADE é o novo campo de status
+        var statusClasses = {
+          '1-CRITICO': 'badge-danger',
+          '2-ATENCAO': 'badge-warning',
+          '3-OK': 'badge-success',
+          '4-AVALIAR': 'badge-info',
+          '8-IGNORAR': 'badge-muted',
+          '9-REPASSE': 'badge-muted'
+        };
+        return '<span class="badge ' + (statusClasses[value] || 'badge-muted') + '">' + DASH.util.escapeHtml(value) + '</span>';
+      }
+
+      /* FASE 2: tipos editáveis
+      case 'decisao': {
+        var val = DASH.util.normalize(value).toUpperCase();
+        var classes = {
+          'PROCESSAR': 'badge-success',
+          'IGNORAR': 'badge-muted',
+          'ANALISAR': 'badge-warning'
+        };
+        if (!val) return '<span class="text-muted">-</span>';
+        return '<span class="badge ' + (classes[val] || 'badge-muted') + '">' + DASH.util.escapeHtml(value) + '</span>';
+      }
+
+      case 'categoria': {
+        var mapa = {
+          '1. REPASSE': 'badge-muted',
+          '2. REPO RAPIDA': 'badge-success',
+          '3. REPO DEVAGAR': 'badge-warning',
+          '4. PENDENTE': 'badge-info'
+        };
+        var classe = mapa[value] || 'badge-muted';
+        if (!value) return '<span class="text-muted">-</span>';
+        return '<span class="badge ' + classe + '">' + DASH.util.escapeHtml(value) + '</span>';
+      }
+      */
+
+      default:
+        return DASH.util.escapeHtml(value);
+    }
+  };
+
+})();
+
+// ============================================================
+// CONFIGURAÇÃO DE CAMPOS EDITÁVEIS (DECISÃO)
+// ============================================================
+DASH.DROPDOWN_CONFIG = {
+  decisao: {
+    instancia: 'AD_COTANEWHIST3',
+    campo: 'DECISAO',
+    chaveNome: 'NUREG',
+    atualizarLocal: function(row, val) {
+      row.DECISAO = val;
+    }
+  }
+};
+
+// ============================================================
+// CRIAR BOTÕES DE DECISÃO (IGNORAR / ANALISAR / PROCESSAR)
+// ============================================================
+DASH.criarBotoesDecisao = function(nureg, valorAtual, rowData) {
+  var util = DASH.util;
+  var atual = util.normalize(valorAtual).toUpperCase();
+
+  var container = document.createElement('div');
+  container.className = 'btns-decisao';
+  container.setAttribute('data-nureg', nureg);
+
+  var opcoes = [
+    { valor: 'IGNORAR',   classe: 'btn-dec-ignorar',   icone: '✕', titulo: 'Ignorar' },
+    { valor: 'ANALISAR',  classe: 'btn-dec-analisar',  icone: '?', titulo: 'Analisar' },
+    { valor: 'PROCESSAR', classe: 'btn-dec-processar', icone: '✓', titulo: 'Processar' }
+  ];
+
+  opcoes.forEach(function(op) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-dec ' + op.classe;
+    btn.setAttribute('data-nureg', nureg);
+    btn.setAttribute('data-valor', op.valor);
+    btn.title = op.titulo;
+
+    if (atual === op.valor) {
+      btn.classList.add('ativo');
+    }
+
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">' +
+      (op.valor === 'IGNORAR'   ? '<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>' :
+       op.valor === 'ANALISAR'  ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>' :
+       '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>') +
+      '</svg>';
+
+    container.appendChild(btn);
+  });
+
+  return container;
+};
+
+// ============================================================
+// ATUALIZAR VISUAL DOS BOTÕES APÓS SALVAMENTO
+// ============================================================
+DASH.atualizarBotoesDecisao = function(container, novoValor) {
+  if (!container) return;
+  var valor = DASH.util.normalize(novoValor).toUpperCase();
+  var botoes = container.querySelectorAll('.btn-dec');
+  
+  for (var i = 0; i < botoes.length; i++) {
+    var btn = botoes[i];
+    var btnValor = DASH.util.normalize(btn.getAttribute('data-valor')).toUpperCase();
+    btn.classList.toggle('ativo', btnValor === valor);
+  }
+};
+
+// ============================================================
+// SALVAR DECISÃO VIA JX.salvar
+// ============================================================
+DASH.salvarDropdown = function(cfg, chaveValor, novoValor) {
+  return new Promise(function(resolve) {
+    if (typeof JX === 'undefined' || typeof JX.salvar !== 'function') {
+      DASH.showToast('❌ Erro: Execute no ambiente Sankhya', 3000);
+      resolve(false);
+      return;
+    }
+
+    var dados = {};
+    dados[cfg.campo] = novoValor || null;
+
+    var chave = {};
+    chave[cfg.chaveNome] = chaveValor;
+
+    JX.salvar(dados, cfg.instancia, chave)
+      .then(function() {
+        console.log('✅ Salvo:', cfg.campo, '=', novoValor, '| Chave:', chaveValor);
+        resolve(true);
+      })
+      .catch(function(err) {
+        console.error('❌ Erro ao salvar:', err);
+        var msg = DASH.util.getErrorMessage(err);
+        DASH.showToast('❌ Erro: ' + msg, 3500);
+        resolve(false);
+      });
+  });
+};
+
+
+/* ==========================================================
+   #DOM
+   ========================================================== */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+
+  DASH.dom = {};
+
+  DASH.cacheDom = function() {
+    var d = DASH.dom;
+    d.$grid = document.getElementById('gridScroll');
+    d.$popup = document.getElementById('popup');
+    d.$globalSearch = document.getElementById('globalSearch');
+    d.$btnPesquisar = document.getElementById('btnPesquisar');
+    d.$btnFiltroRapido = document.getElementById('btnFiltroRapido');
+    d.$btnACompras = document.getElementById('btnACompras');
+    d.$inputDateRange = document.getElementById('inputDateRange');
+    d.$dateQuickButtons = document.getElementById('dateQuickButtons');
+    d.$btnToggleCols = document.getElementById('btnToggleCols');
+    d.$menuCols = document.getElementById('menuCols');
+    d.$btnRefresh = document.getElementById('btnRefresh');
+    d.$btnClear = document.getElementById('btnClear');
+    d.$btnExport = document.getElementById('btnExport');
+    d.$btnExportTxt = document.getElementById('btnExportTxt');
+    d.$btnExportXls = document.getElementById('btnExportXls');
+    d.$pageSize = document.getElementById('pageSize');
+    d.$btnPrev = document.getElementById('btnPrev');
+    d.$btnNext = document.getElementById('btnNext');
+    d.$pageInfo = document.getElementById('pageInfo');
+    d.$selectionInfo = document.getElementById('selectionInfo');
+    d.$totalInfo = document.getElementById('totalInfo');
+    d.$loading = document.getElementById('loading');
+    d.$activeFiltersBar = document.getElementById('activeFiltersBar');
+    d.$appToast = document.getElementById('appToast');
+    d.$tip = document.getElementById('tooltipSimilar');
+    d.$dateRangeWrapper = document.getElementById('dateRangeWrapper');
+    d.$inputDateRange = document.getElementById('inputDateRange');
+  };
+
+})();
+
+/* ==========================================================
+   #COMENTARIOS - Cache, leitura, escrita, resolve, popover
+   ========================================================== */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+  var util = DASH.util;
+
+  // Cache de comentários: { "NUREG": [ {NUREG, SEQUENCIA, CODUSU, NOMEUSU, DTCOMENT, COMENTARIO, RESOLVIDO}, ... ] }
+  DASH.comentariosMap = {};
+  DASH._comentarioNuregs = {};
+  DASH._comentarioUsuario = { CODUSU: 0, NOMEUSU: 'Usuário' };
+  DASH._commentPopNureg = null;
+
+  // Retorna classe CSS do ícone: '' | 'has-comments' | 'all-resolved'
+  DASH.comentarioIconClasse = function(nureg) {
+    var nr = String(nureg);
+    var lista = DASH.comentariosMap[nr];
+    if (!lista || lista.length === 0) return '';
+    var todosResolvidos = true;
+    for (var i = 0; i < lista.length; i++) {
+      if (lista[i].RESOLVIDO !== 'S') { todosResolvidos = false; break; }
+    }
+    return todosResolvidos ? 'all-resolved' : 'has-comments';
+  };
+
+  // CARREGAR todos os comentários do banco (chamado após finalizarCarregamento)
+  DASH.carregarComentarios = function() {
+    if (typeof JX === 'undefined' || typeof JX.consultar !== 'function') {
+      console.warn('⚠️ JX indisponível — comentários desabilitados');
+      return;
+    }
+
+    var sql = "SELECT C.NUREG, C.SEQUENCIA, C.CODUSU, C.COMENTARIO, " +
+      "NVL(C.RESOLVIDO, 'N') AS RESOLVIDO, " +
+      "TO_CHAR(C.DTCOMENT, 'DD/MM/YYYY HH24:MI') AS DTCOMENT_FMT, " +
+      "U.NOMEUSU " +
+      "FROM AD_COTACOMENT C " +
+      "LEFT JOIN TSIUSU U ON C.CODUSU = U.CODUSU " +
+      "ORDER BY C.NUREG, C.SEQUENCIA";
+
+    JX.consultar(sql)
+      .then(function(dados) {
+        DASH.comentariosMap = {};
+        DASH._comentarioNuregs = {};
+
+        if (!dados || !dados.length) {
+          console.log('💬 Comentários: 0 registros');
+          return;
+        }
+
+        for (var i = 0; i < dados.length; i++) {
+          var c = dados[i];
+          var nr = String(c.NUREG);
+          if (!DASH.comentariosMap[nr]) DASH.comentariosMap[nr] = [];
+          DASH.comentariosMap[nr].push({
+            NUREG: c.NUREG,
+            SEQUENCIA: c.SEQUENCIA,
+            CODUSU: c.CODUSU,
+            NOMEUSU: c.NOMEUSU || 'Usuário',
+            DTCOMENT: c.DTCOMENT_FMT || '',
+            COMENTARIO: c.COMENTARIO || '',
+            RESOLVIDO: c.RESOLVIDO || 'N'
+          });
+          DASH._comentarioNuregs[nr] = true;
+        }
+
+        console.log('💬 Comentários:', dados.length, 'registros,',
+          Object.keys(DASH._comentarioNuregs).length, 'produtos');
+
+        // Atualiza indicadores visuais no grid já renderizado
+        DASH.renderBody();
+      })
+      .catch(function(err) {
+        console.error('❌ Erro carregar comentários:', err);
+      });
+
+    // Validar instância no banco
+    JX.consultar("SELECT NOMEINSTANCIA FROM TDDINS WHERE NOMEINSTANCIA = 'AD_COTACOMENT'")
+      .then(function(r) {
+        if (r && r.length > 0) {
+          console.log('[DASH Cotações] ✅ Instância AD_COTACOMENT encontrada em TDDINS');
+        } else {
+          console.error('[DASH Cotações] ❌ Instância AD_COTACOMENT NÃO encontrada em TDDINS!');
+        }
+      })
+      .catch(function(e) {
+        console.warn('[DASH Cotações] ⚠️ Não foi possível validar TDDINS:', e);
+      });
+
+    // Identifica usuário logado
+    JX.consultar("SELECT CODUSU, NOMEUSU FROM TSIUSU WHERE CODUSU = STP_GET_CODUSULOGADO")
+      .then(function(res) {
+        if (res && res.length > 0) {
+          DASH._comentarioUsuario = {
+            CODUSU: Number(res[0].CODUSU) || 0,
+            NOMEUSU: res[0].NOMEUSU || 'Usuário'
+          };
+          console.log('👤 Usuário:', DASH._comentarioUsuario.NOMEUSU);
+        }
+      })
+      .catch(function(err) { console.warn('⚠️ Usuário não identificado:', err); });
+  };
+
+  // ABRIR POPOVER de comentários
+  DASH.abrirComentarios = function(nureg, anchorEl) {
+    var pop = document.getElementById('commentPopover');
+    if (!pop) return;
+
+    DASH._commentPopNureg = String(nureg);
+
+    // Posiciona ao lado do ícone clicado
+    var rect = anchorEl.getBoundingClientRect();
+    var left = rect.right + 8;
+    var top = rect.top - 20;
+
+    // Não sair pela direita
+    if (left + 340 > window.innerWidth - 10) {
+      left = rect.left - 340 - 8;
+    }
+    // Não sair por baixo
+    if (top + 420 > window.innerHeight - 10) {
+      top = window.innerHeight - 420 - 10;
+    }
+    if (top < 10) top = 10;
+
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+    pop.classList.add('show');
+
+    DASH._renderComentariosThread();
+
+    var input = document.getElementById('commentInput');
+    if (input) {
+      input.value = '';
+      setTimeout(function() { input.focus(); }, 100);
+    }
+  };
+
+  // FECHAR POPOVER
+  DASH.fecharComentarios = function() {
+    var pop = document.getElementById('commentPopover');
+    if (pop) pop.classList.remove('show');
+    DASH._commentPopNureg = null;
+  };
+
+  // RENDERIZAR THREAD de comentários dentro do popover
+  DASH._renderComentariosThread = function() {
+    var body = document.getElementById('commentPopBody');
+    if (!body) return;
+
+    var nureg = DASH._commentPopNureg;
+    var lista = DASH.comentariosMap[nureg] || [];
+
+    if (lista.length === 0) {
+      body.innerHTML = '<div class="comment-pop-empty">Nenhum comentário ainda.<br>Digite abaixo para adicionar.</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < lista.length; i++) {
+      var c = lista[i];
+      var iniciais = (c.NOMEUSU || 'U').substring(0, 2);
+      var isResolvido = (c.RESOLVIDO === 'S');
+      var resolvedClass = isResolvido ? ' resolved' : '';
+
+      html += '<div class="comment-item' + resolvedClass + '" data-seq="' + c.SEQUENCIA + '">' +
+        '<div class="comment-item-row">' +
+          '<div class="comment-item-avatar">' + iniciais + '</div>' +
+          '<div class="comment-item-content">' +
+            '<div class="comment-item-header">' +
+              '<span class="comment-item-name">' + util.escapeHtml(c.NOMEUSU) + '</span>' +
+              '<span class="resolved-label">✓ Resolvido</span>' +
+              '<span class="comment-item-date">' + util.escapeHtml(c.DTCOMENT) + '</span>' +
+            '</div>' +
+            '<div class="comment-item-text">' + util.escapeHtml(c.COMENTARIO) + '</div>' +
+          '</div>' +
+          '<button class="comment-resolve-btn" data-nureg="' + nureg + '" data-seq="' + c.SEQUENCIA + '" title="' + (isResolvido ? 'Reabrir' : 'Resolver') + '">' +
+            '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    body.innerHTML = html;
+    body.scrollTop = body.scrollHeight;
+  };
+
+  // TOGGLE resolver/reabrir um comentário individual
+  DASH.toggleResolverComentario = function(nureg, sequencia) {
+    var nr = String(nureg);
+    var seq = Number(sequencia);
+    var lista = DASH.comentariosMap[nr];
+    if (!lista) return;
+
+    var item = null;
+    for (var i = 0; i < lista.length; i++) {
+      if (Number(lista[i].SEQUENCIA) === seq) { item = lista[i]; break; }
+    }
+    if (!item) return;
+
+    var novoValor = (item.RESOLVIDO === 'S') ? 'N' : 'S';
+
+    var dadosUpd = { RESOLVIDO: novoValor };
+    var pks = { NUREG: Number(nureg), SEQUENCIA: seq };
+
+    console.log('[DASH Cotações] UPDATE via JX.salvar, dados:', JSON.stringify(dadosUpd), 'pks:', JSON.stringify(pks));
+
+    JX.salvar(dadosUpd, 'AD_COTACOMENT', [pks])
+      .then(function(resp) {
+        console.log('[DASH Cotações] Resposta UPDATE:', JSON.stringify(resp));
+        if (!resp || !resp[0] || resp[0].status !== '1') {
+          var msgErro = (resp && resp[0] && resp[0].statusMessage) || 'Erro desconhecido';
+          console.error('[DASH Cotações] FALHA UPDATE:', msgErro);
+          DASH.showToast('❌ Erro ao resolver: ' + msgErro, 3000);
+          return;
+        }
+        item.RESOLVIDO = novoValor;
+        DASH._renderComentariosThread();
+        DASH._atualizarIconeComentario(nr);
+        DASH.showToast(novoValor === 'S' ? '✓ Resolvido' : '↩ Reaberto', 1200);
+      })
+      .catch(function(err) {
+        console.error('❌ Erro resolver:', err);
+        DASH.showToast('❌ Erro ao resolver', 3000);
+      });
+  };
+
+  // Atualiza ícone de UMA linha específica sem re-render total
+  DASH._atualizarIconeComentario = function(nureg) {
+    var classe = DASH.comentarioIconClasse(nureg);
+    var icons = document.querySelectorAll('.comment-icon[data-nureg="' + nureg + '"]');
+    for (var k = 0; k < icons.length; k++) {
+      icons[k].classList.remove('has-comments', 'all-resolved');
+      if (classe) icons[k].classList.add(classe);
+    }
+  };
+
+  // SALVAR novo comentário (chamado via Enter no input)
+  // Usa INSERT via JX.salvar — depende do Dicionário de Dados
+  DASH.salvarComentario = function() {
+    var input = document.getElementById('commentInput');
+    if (!input) return;
+
+    var texto = (input.value || '').trim();
+    if (!texto) return;
+
+    var nureg = DASH._commentPopNureg;
+    if (!nureg) return;
+
+    input.disabled = true;
+    input.placeholder = 'Salvando...';
+
+    // Buscar próxima SEQUENCIA via MAX+1
+    var sqlSeq = "SELECT NVL(MAX(SEQUENCIA),0)+1 AS PROX FROM AD_COTACOMENT WHERE NUREG = " + Number(nureg);
+    JX.consultar(sqlSeq)
+      .then(function(seqRes) {
+        var sequencia = (seqRes && seqRes.length > 0) ? Number(seqRes[0].PROX) : 1;
+
+        var agora = new Date();
+        var dtStr = ('0' + agora.getDate()).slice(-2) + '/' +
+                    ('0' + (agora.getMonth() + 1)).slice(-2) + '/' +
+                    agora.getFullYear();
+        var horaStr = ('0' + agora.getHours()).slice(-2) + ':' +
+                      ('0' + agora.getMinutes()).slice(-2);
+
+        var dados = {
+          NUREG: Number(nureg),
+          SEQUENCIA: sequencia,
+          CODUSU: DASH._comentarioUsuario.CODUSU,
+          COMENTARIO: texto,
+          DTCOMENT: dtStr,
+          RESOLVIDO: 'N'
+        };
+
+        console.log('[DASH Cotações] INSERT via JX.salvar, dados:', JSON.stringify(dados));
+
+        JX.salvar(dados, 'AD_COTACOMENT', [{}])
+          .then(function(resp) {
+            console.log('[DASH Cotações] Resposta INSERT:', JSON.stringify(resp));
+            if (!resp || !resp[0] || resp[0].status !== '1') {
+              var msgErro = (resp && resp[0] && resp[0].statusMessage) || 'Erro desconhecido';
+              console.error('[DASH Cotações] FALHA INSERT:', msgErro);
+              input.disabled = false;
+              input.placeholder = 'Comentar... (Enter para salvar)';
+              DASH.showToast('❌ Erro: ' + msgErro, 3000);
+              return;
+            }
+
+            // Atualiza cache local
+            var nr = String(nureg);
+            if (!DASH.comentariosMap[nr]) DASH.comentariosMap[nr] = [];
+            DASH.comentariosMap[nr].push({
+              NUREG: Number(nureg),
+              SEQUENCIA: sequencia,
+              CODUSU: DASH._comentarioUsuario.CODUSU,
+              NOMEUSU: DASH._comentarioUsuario.NOMEUSU,
+              DTCOMENT: dtStr + ' ' + horaStr,
+              COMENTARIO: texto,
+              RESOLVIDO: 'N'
+            });
+            DASH._comentarioNuregs[nr] = true;
+
+            input.value = '';
+            input.disabled = false;
+            input.placeholder = 'Comentar... (Enter para salvar)';
+            input.focus();
+            DASH._renderComentariosThread();
+            DASH._atualizarIconeComentario(nr);
+            DASH.showToast('💬 Comentário salvo', 1500);
+          })
+          .catch(function(err) {
+            console.error('❌ Erro INSERT comentário:', err);
+            input.disabled = false;
+            input.placeholder = 'Comentar... (Enter para salvar)';
+            DASH.showToast('❌ Erro ao salvar', 3000);
+          });
+      })
+      .catch(function(err) {
+        console.error('❌ Erro ao buscar sequência:', err);
+        input.disabled = false;
+        input.placeholder = 'Comentar... (Enter para salvar)';
+        DASH.showToast('❌ Erro ao preparar comentário', 3000);
+      });
+  };
+
+  // BINDS GLOBAIS
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target && e.target.id === 'commentInput') {
+      e.preventDefault();
+      DASH.salvarComentario();
+    }
+  });
+
+  // Fechar popover ao clicar fora
+  document.addEventListener('mousedown', function(e) {
+    var pop = document.getElementById('commentPopover');
+    if (!pop || !pop.classList.contains('show')) return;
+    if (!pop.contains(e.target) && !e.target.closest('.comment-icon')) {
+      DASH.fecharComentarios();
+    }
+  });
+
+  // Delegation para botão resolver dentro do popover
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.comment-resolve-btn');
+    if (!btn) return;
+    var nureg = btn.getAttribute('data-nureg');
+    var seq = btn.getAttribute('data-seq');
+    if (nureg && seq) {
+      DASH.toggleResolverComentario(nureg, seq);
+    }
+  });
+
+})();
+
+/* ==========================================================
+   #DATA
+   ============================================================ */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+  var util = DASH.util;
+
+  // ============================================================
+  // EXTRAÇÃO E NORMALIZAÇÃO DE DADOS
+  // ============================================================
+  DASH.extractRows = function(resultado) {
+    if (!resultado) return [];
+    if (Array.isArray(resultado)) return resultado;
+    if (Array.isArray(resultado.retorno)) return resultado.retorno;
+    if (resultado.data) {
+      if (Array.isArray(resultado.data)) return resultado.data;
+      if (Array.isArray(resultado.data.rows)) return resultado.data.rows;
+      if (Array.isArray(resultado.data.result)) return resultado.data.result;
+      if (Array.isArray(resultado.data.retorno)) return resultado.data.retorno;
+    }
+    if (Array.isArray(resultado.rows)) return resultado.rows;
+    if (Array.isArray(resultado.result)) return resultado.result;
+    if (Array.isArray(resultado.resultado)) return resultado.resultado;
+    if (typeof resultado.responseText === 'string') {
+      try { return DASH.extractRows(JSON.parse(resultado.responseText)); } catch (e) {}
+    }
+    return [];
+  };
+
+  DASH.normalizeRowKeys = function(row) {
+    if (!row || typeof row !== 'object') return row;
+    var out = {};
+    for (var k in row) {
+      if (Object.prototype.hasOwnProperty.call(row, k)) {
+        out[k] = row[k];
+      }
+    }
+    for (var k2 in row) {
+      if (Object.prototype.hasOwnProperty.call(row, k2)) {
+        var up = String(k2).toUpperCase();
+        if (!(up in out)) out[up] = row[k2];
+      }
+    }
+    return out;
+  };
+
+  DASH.normalizeRows = function(rows) {
+    if (!Array.isArray(rows)) return [];
+    return rows.map(DASH.normalizeRowKeys);
+  };
+
+  // ============================================================
+  // CARREGAMENTO DE DADOS (NOVO SQL - AD_COTANEWHIST3)
+  // ============================================================
+  DASH.loadData = function(mode) {
+    var d = DASH.dom;
+    var state = DASH.state;
+
+    d.$loading.style.display = 'flex';
+    console.log('🔍 loadData chamado. dateRange:', JSON.stringify(DASH.state.dateRange));
+    d.$loading.textContent = 'Carregando dados...';
+
+    if (typeof JX === 'undefined') {
+      console.error('❌ ERRO: JX não está definido');
+      d.$loading.textContent = 'ERRO: Biblioteca JX não carregada. Verifique se está no ambiente Sankhya.';
+      return;
+    }
+
+    // ============================================================
+    // SQL DISTINCT POR CODPROD (Oracle) + PAGINAÇÃO
+    // ============================================================
+    var todosRegistros = [];
+    var loteAtual = 1;
+    var tamanhoPagina = 5000;
+    var continuar = true;
+
+    // Filtro automático: apenas REPO RAPIDA e PENDENTE
+    var whereCotacao = ' WHERE P.CATCOMPRA IN (\'2. REPO RAPIDA\', \'4. PENDENTE\') ';
+
+    // Filtro de período DTNEG removido do SQL
+    // Agora é aplicado em memória (client-side) para melhor performance
+    var whereDtneg = '';
+
+    function montarSqlPaginado(offsetInicio, offsetFim) {
+      return (
+        'SELECT * FROM (' +
+        '  SELECT base.*, ROW_NUMBER() OVER (ORDER BY base.CODPROD) AS RN ' +
+        '  FROM (' +
+        '    SELECT ' +
+        '      P.COTACAO_STATUS, ' +
+        '      P.PRIORIDADE, ' +
+        '      P.SUGESTAO_QTD, ' +
+        '      P.DECISAO, ' +
+        '      P.NUNOTA, ' +
+        '      NVL(TO_CHAR(P.DTNEG, \'DD/MM/YYYY\'), \'\') AS DTNEG, ' +
+        '      P.CODPROD, ' +
+        '      P.NUREG, ' +
+        '      P.COMPLDESC, ' +
+        '      P.REFFORN, ' +
+        '      P.CODIGO, ' +
+        '      P.MARCA, ' +
+        '      P.DESCRPROD, ' +
+        '      P.PERCEBIDO, ' +
+        '      P.STATUSREP, ' +
+        '      P.ESTOQUE, ' +
+        '      P.LIN_ETQTT, ' +
+        '      P.SIM_ETQTT, ' +
+        '      P.LIN_VEN_QTDLIQ_TT, ' +
+        '      P.LIN_VEN_MED3MES_QTD, ' +
+        '      P.LIN_VEN_ABC, ' +
+        '      NVL(TO_CHAR(P.ORG_COM_DTULTCOM, \'DD/MM/YYYY\'), \'\') AS ORG_COM_DTULTCOM, ' +
+        '      P.ORG_COM_ULTCUSTO, ' +
+        '      ROW_NUMBER() OVER (PARTITION BY P.CODPROD ORDER BY P.NUNOTA DESC) AS RN_PROD ' +
+        '    FROM AD_COTANEWHIST3 P ' +
+        whereDtneg +
+        whereCotacao +
+        '  ) base ' +
+        '  WHERE base.RN_PROD = 1 ' +
+        ') WHERE RN >= ' + offsetInicio + ' AND RN <= ' + offsetFim
+      );
+    }
+
+    function carregarProximoLote() {
+      if (!continuar) return;
+
+      var offsetInicio = (loteAtual - 1) * tamanhoPagina + 1;
+      var offsetFim = loteAtual * tamanhoPagina;
+      var sqlPaginado = montarSqlPaginado(offsetInicio, offsetFim);
+      
+      // Log para debug (filtro de período agora é aplicado em memória)
+      if (loteAtual === 1) {
+        console.log('📊 Carregando dados do banco (sem filtro de período no SQL)');
+        console.log('🔍 state.dateRange:', JSON.stringify(state.dateRange));
+      }
+
+      d.$loading.textContent = 'Carregando dados' +
+        ' — lote ' + loteAtual + ' (' + todosRegistros.length + ' registros)...';
+
+      JX.consultar(sqlPaginado)
+        .then(function(resultado) {
+          var rows = DASH.normalizeRows(DASH.extractRows(resultado));
+
+          if (!rows || rows.length === 0) {
+            finalizarCarregamento();
+            return;
+          }
+
+          todosRegistros = todosRegistros.concat(rows);
+
+          if (rows.length < tamanhoPagina) {
+            finalizarCarregamento();
+          } else {
+            loteAtual++;
+            setTimeout(carregarProximoLote, 100);
+          }
+        })
+        .catch(function(erro) {
+          continuar = false;
+          var msg = util.getErrorMessage(erro);
+          console.error('❌ Erro ao carregar lote ' + loteAtual + ':', erro);
+          d.$loading.innerHTML =
+            '<div style="color:#dc2626;background:#fee2e2;padding:20px;border-radius:8px;text-align:left;margin:20px;">' +
+              '<b>❌ ERRO ao carregar lote ' + loteAtual + ':</b> ' + util.escapeHtml(msg) +
+            '</div>';
+        });
+    }
+
+    function finalizarCarregamento() {
+      continuar = false;
+      
+      // Remove loading do botão pesquisar
+      if (DASH.dom.$btnPesquisar) {
+        DASH.dom.$btnPesquisar.classList.remove('is-loading');
+      }
+
+      if (todosRegistros.length === 0) {
+        d.$loading.innerHTML =
+          '<div style="color:#b45309;background:#fef3c7;padding:20px;border-radius:8px;text-align:left;margin:20px;">' +
+            '<b>⚠️ Nenhum registro encontrado</b><br>' +
+            '<span style="font-size:12px;opacity:.85">Verifique se a tabela AD_COTANEWHIST3 existe e tem dados.</span>' +
+          '</div>';
+        return;
+      }
+
+      DASH.preparseDatas(todosRegistros);
+
+      DASH.DATA = todosRegistros;
+      DASH.DATA_FULL = todosRegistros;
+      DASH.state.dataOrigin = 'banco';
+
+      console.log('✅ CARREGAMENTO COMPLETO:', todosRegistros.length, 'registros (distintos)');
+
+      d.$loading.style.display = 'none';
+      
+      DASH.render();
+
+      // Carrega comentários em paralelo (não bloqueia o grid)
+      if (typeof DASH.carregarComentarios === 'function') {
+        DASH.carregarComentarios();
+      }
+    }
+
+    carregarProximoLote();
+  };
+
+})();
+
+/* ==========================================================
+   #FILTERS
+   ========================================================== */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+  var util = DASH.util;
+
+  // ============================================================
+  // INICIALIZAÇÃO DOS FILTROS
+  // ============================================================
+  DASH.initFilters = function() {
+    var state = DASH.state;
+    DASH.COLS.forEach(function(col) {
+      state.quickFilters[col.key] = '';
+      state.menuFilters[col.key] = {
+        operator: 'contains',
+        value: '',
+        selected: new Set(),
+        includeBlanks: true,
+        mode: 'all'
+      };
+    });
+    DASH.restoreFilterState();
+  };
+
+  // ============================================================
+  // PERSISTÊNCIA DE FILTROS (localStorage)
+  // ============================================================
+  DASH.saveFilterState = function() {
+    var state = DASH.state;
+    try {
+      var menuFilters = {};
+      for (var key in state.menuFilters) {
+        if (!Object.prototype.hasOwnProperty.call(state.menuFilters, key)) continue;
+        var mf = state.menuFilters[key];
+        var selectedArr = [];
+        if (mf.selected && typeof mf.selected.forEach === 'function') {
+          mf.selected.forEach(function(v) { selectedArr.push(v); });
+        }
+        menuFilters[key] = {
+          operator: mf.operator,
+          value: mf.value,
+          selected: selectedArr,
+          includeBlanks: mf.includeBlanks,
+          mode: mf.mode || 'all'
+        };
+      }
+      var quickCopy = {};
+      for (var qk in state.quickFilters) {
+        if (Object.prototype.hasOwnProperty.call(state.quickFilters, qk)) {
+          quickCopy[qk] = state.quickFilters[qk];
+        }
+      }
+      var payload = {
+        quickFilters: quickCopy,
+        menuFilters: menuFilters
+      };
+      localStorage.setItem(DASH.FILTERS_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+      console.warn('Erro ao salvar filtros:', e);
+    }
+  };
+
+  DASH.restoreFilterState = function() {
+    var state = DASH.state;
+    try {
+      var raw = localStorage.getItem(DASH.FILTERS_STORAGE_KEY);
+      if (!raw) return;
+      var saved = JSON.parse(raw);
+      if (saved.quickFilters) {
+        for (var k in saved.quickFilters) {
+          if (Object.prototype.hasOwnProperty.call(saved.quickFilters, k) && (k in state.quickFilters)) {
+            state.quickFilters[k] = saved.quickFilters[k] || '';
+          }
+        }
+      }
+      if (saved.menuFilters) {
+        for (var mk in saved.menuFilters) {
+          if (!Object.prototype.hasOwnProperty.call(saved.menuFilters, mk)) continue;
+          if (!(mk in state.menuFilters)) continue;
+          var s = saved.menuFilters[mk];
+          state.menuFilters[mk].operator = s.operator || 'contains';
+          state.menuFilters[mk].value = s.value || '';
+          state.menuFilters[mk].selected = new Set(s.selected || []);
+          state.menuFilters[mk].includeBlanks = s.includeBlanks !== false;
+          state.menuFilters[mk].mode = s.mode || (state.menuFilters[mk].selected.size > 0 ? 'subset' : 'all');
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao restaurar filtros:', e);
+    }
+  };
+
+  // ============================================================
+  // FILTRAGEM
+  // ============================================================
+  DASH.matchesOperator = function(cellValue, operator, filterValue) {
+    var cell = util.normalize(cellValue).toLowerCase();
+    var filter = util.normalize(filterValue).toLowerCase();
+
+    if (!filter && ['blank', 'notBlank'].indexOf(operator) === -1) return true;
+
+    switch (operator) {
+      case 'contains':    return cell.indexOf(filter) !== -1;
+      case 'notContains': return cell.indexOf(filter) === -1;
+      case 'equals':      return cell === filter;
+      case 'notEquals':   return cell !== filter;
+      case 'beginsWith':  return cell.indexOf(filter) === 0;
+      case 'endsWith':    return cell.lastIndexOf(filter) === cell.length - filter.length;
+      case 'blank':       return util.isBlank(cellValue);
+      case 'notBlank':    return !util.isBlank(cellValue);
+      default:            return true;
+    }
+  };
+
+  DASH.filterData = function(rows) {
+    var state = DASH.state;
+    var util = DASH.util;
+    var result = rows.slice();
+
+    // ORDEM OTIMIZADA: filtros que reduzem mais primeiro
+
+    // 1. Filtros por coluna (select) - maior redução
+    result = result.filter(function(row) {
+      for (var i = 0; i < DASH.COLS.length; i++) {
+        var col = DASH.COLS[i];
+        var menu = state.menuFilters[col.key];
+        var cellValue = row[col.key];
+
+        if (menu.mode === 'none') return false;
+        if (util.isBlank(cellValue) && !menu.includeBlanks) return false;
+        if (!DASH.matchesOperator(cellValue, menu.operator, menu.value)) return false;
+        if (menu.mode === 'subset' && menu.selected.size > 0 && !menu.selected.has(util.normalize(cellValue))) return false;
+      }
+      return true;
+    });
+
+    // 2. Filtro global (busca em todas as colunas) - por último
+    var global = state.globalSearch.trim().toLowerCase();
+    if (global) {
+      result = result.filter(function(row) {
+        return DASH.COLS.some(function(col) {
+          return util.normalize(row[col.key]).toLowerCase().indexOf(global) !== -1;
+        });
+      });
+    }
+
+    return result;
+  };
+
+  /**
+   * Filtra registros por período de data (client-side)
+   * @param {Array} rows - Array de registros
+   * @param {string} campo - Nome da coluna de data (ex: 'DTNEG')
+   * @param {string} dtIni - Data inicial formato DD/MM/YYYY
+   * @param {string} dtFim - Data final formato DD/MM/YYYY
+   * @returns {Array} Registros filtrados
+   */
+  DASH.filtrarPorPeriodo = function(rows, campo, dtIni, dtFim) {
+    if (!dtIni || !dtFim || !rows || rows.length === 0) {
+      return rows;
+    }
+    
+    var tsIni = DASH.util.parseDataParaTimestamp(dtIni);
+    var tsFim = DASH.util.parseDataParaTimestamp(dtFim);
+    
+    // Ajusta fim do dia (23:59:59)
+    tsFim = tsFim + (23 * 60 * 60 * 1000) + (59 * 60 * 1000) + (59 * 1000);
+    
+    return rows.filter(function(row) {
+      var valorCampo = row[campo];
+      if (!valorCampo) return false;
+
+      var tsKey = campo + '_TS';
+      var tsRow = row[tsKey];
+      if (tsRow == null) {
+        tsRow = DASH.util.parseDataParaTimestamp(valorCampo);
+        row[tsKey] = tsRow;
+      }
+      if (tsRow === 0) return false;
+
+      return tsRow >= tsIni && tsRow <= tsFim;
+    });
+  };
+
+  /**
+   * Aplica todos os filtros locais (período + busca global + filtros de coluna)
+   * Usa DATA_FULL como fonte e atualiza DATA com resultado filtrado
+   */
+DASH.aplicarFiltrosLocais = function(opts) {
+  var state = DASH.state;
+  var options = opts || {};
+  
+  // Reset paginação
+  state.currentPage = 1;
+  state.selectedIds.clear();
+  state.dataOrigin = 'local';
+  
+  // Renderiza (getVisibleRows aplica todos os filtros)
+  DASH.render();
+  
+  // Feedback visual
+  if (!options.silent) {
+    var count = DASH.getVisibleRows().length;
+    DASH.showToast('✅ Filtro aplicado: ' + count + ' registros', 1500);
+  }
+};
+
+  // ============================================================
+  // LIMPAR FILTROS
+  // ============================================================
+  DASH.clearAllFilters = function() {
+    var state = DASH.state;
+    var d = DASH.dom;
+
+    state.globalSearch = '';
+    if (d.$globalSearch) d.$globalSearch.value = '';
+    state.sort = { key: 'CODPROD', dir: 'asc' };
+    state.selectedIds.clear();
+    state.currentPage = 1;
+
+    // Limpa Filtro Rápido
+    state.filtroRapido = false;
+    if (d.$btnFiltroRapido) d.$btnFiltroRapido.classList.remove('active');
+
+    // Limpa Filtro A COMPRAS
+    state.filtroACompras = false;
+    if (d.$btnACompras) d.$btnACompras.classList.remove('active');
+
+    DASH.COLS.forEach(function(col) {
+      state.quickFilters[col.key] = '';
+      state.menuFilters[col.key] = {
+        operator: 'contains',
+        value: '',
+        selected: new Set(),
+        includeBlanks: true,
+        mode: 'all'
+      };
+    });
+
+    // Limpa filtro de período
+    clearDateRange();
+
+    DASH.closeMenu();
+    DASH.saveFilterState();
+    DASH.render();
+  };
+
+  // ============================================================
+  // BARRA DE FILTROS ATIVOS
+  // ============================================================
+  DASH.renderActiveFilters = function() {
+    var state = DASH.state;
+    var d = DASH.dom;
+    if (!d.$activeFiltersBar) return;
+
+    var active = [];
+    for (var key in state.menuFilters) {
+      if (!Object.prototype.hasOwnProperty.call(state.menuFilters, key)) continue;
+      var v = state.menuFilters[key];
+      var isActive = false;
+      if (v.mode === 'none') isActive = true;
+      else if (v.mode === 'subset') isActive = v.selected.size > 0;
+      else if (v.mode === 'all') isActive = false;
+      else isActive = v.selected.size > 0;
+      if (isActive) active.push({ key: key, value: v });
+    }
+
+    // Verifica se tem filtro de período
+    var temPeriodo = state.dateRange.dtIni && state.dateRange.dtFim;
+    var temOrigem = !!state.dataOrigin;
+
+    if (active.length === 0 && !temPeriodo && !temOrigem) {
+      d.$activeFiltersBar.classList.remove('show');
+      d.$activeFiltersBar.innerHTML = '';
+      return;
+    }
+
+    d.$activeFiltersBar.classList.add('show');
+    var tagsHtml = active.map(function(entry) {
+      var key = entry.key;
+      var v = entry.value;
+      var text = '';
+      if (v.mode === 'none') {
+        text = 'Nenhum';
+      } else {
+        var total = v.selected.size;
+        if (total <= 2) {
+          var selArr = [];
+          v.selected.forEach(function(s) { selArr.push(s === '' ? '(Vazios)' : s); });
+          text = selArr.join(', ');
+        } else {
+          text = total + ' selecionado(s)';
+        }
+      }
+      return '<span class="filter-tag" data-col="' + util.escapeHtml(key) + '">' +
+        util.escapeHtml(DASH.getColLabel(key)) + ': ' + util.escapeHtml(text) +
+        '<span class="filter-tag-remove" title="Remover filtro">✕</span>' +
+        '</span>';
+    }).join('');
+
+
+    // Adiciona tag de período se existir
+    var periodoHtml = '';
+    if (state.dateRange.dtIni && state.dateRange.dtFim) {
+      periodoHtml = '<span class="filter-tag" data-col="DTNEG_RANGE">' +
+        'Período: ' + DASH.util.escapeHtml(state.dateRange.dtIni) + ' - ' + DASH.util.escapeHtml(state.dateRange.dtFim) +
+        '<span class="filter-tag-remove" title="Remover filtro">✕</span>' +
+        '</span>';
+    }
+
+    d.$activeFiltersBar.innerHTML = periodoHtml + tagsHtml +
+      '<button class="filter-clear-all" data-action="clear-all">Limpar tudo</button>';
+
+    // Mostra barra se tem período ou filtros
+    if (state.dateRange.dtIni || active.length > 0) {
+      d.$activeFiltersBar.classList.add('show');
+    }
+  };
+
+  // ============================================================
+  // MENU DE FILTRO (POPUP)
+  // ============================================================
+  DASH.openMenu = function(col, anchorEl) {
+    var d = DASH.dom;
+    var state = DASH.state;
+    var rect = anchorEl.getBoundingClientRect();
+    var left = Math.min(window.innerWidth - 360, rect.left);
+    var top = Math.min(window.innerHeight - 450, rect.bottom + 8);
+
+    d.$popup.style.left = left + 'px';
+    d.$popup.style.top = top + 'px';
+    d.$popup.classList.add('show');
+
+    var menu = state.menuFilters[col.key];
+    var valueCounts = {};
+    DASH.DATA.forEach(function(r) {
+      var v = util.normalize(r[col.key]);
+      valueCounts[v] = (valueCounts[v] || 0) + 1;
+    });
+    var distinctValues = Object.keys(valueCounts).sort(function(a, b) {
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+
+    var tempSelected;
+    if (menu.mode === 'subset') {
+      tempSelected = new Set(menu.selected);
+    } else if (menu.mode === 'none') {
+      tempSelected = new Set();
+    } else {
+      tempSelected = new Set(distinctValues);
+    }
+
+    d.$popup.innerHTML =
+      '<div class="filter-popover-header">' +
+        '<div>' + util.escapeHtml(col.label) + '</div>' +
+        '<button class="filter-popover-close" id="popupClose">✕</button>' +
+      '</div>' +
+      '<div class="filter-sort-section">' +
+        '<button class="sort-btn ' + (state.sort.key === col.key && state.sort.dir === 'asc' ? 'active' : '') + '" id="popupSortAsc">A → Z</button>' +
+        '<button class="sort-btn ' + (state.sort.key === col.key && state.sort.dir === 'desc' ? 'active' : '') + '" id="popupSortDesc">Z → A</button>' +
+      '</div>' +
+      '<div class="filter-search">' +
+        '<input type="text" id="popupSearch" placeholder="Buscar valores...">' +
+      '</div>' +
+      '<div class="filter-actions">' +
+        '<button class="filter-action-btn" id="popupSelectAll">Selecionar visíveis</button>' +
+        '<button class="filter-action-btn" id="popupSelectNone">Desmarcar visíveis</button>' +
+      '</div>' +
+      '<div class="filter-values" id="popupValueList"></div>' +
+      '<div class="filter-footer">' +
+        '<button class="btn" id="popupClear">Limpar</button>' +
+        '<button class="btn btn-primary" id="popupApply">Aplicar</button>' +
+      '</div>';
+
+    var $close = document.getElementById('popupClose');
+    var $search = document.getElementById('popupSearch');
+    var $valueList = document.getElementById('popupValueList');
+    var $clear = document.getElementById('popupClear');
+    var $apply = document.getElementById('popupApply');
+    var $selectAll = document.getElementById('popupSelectAll');
+    var $selectNone = document.getElementById('popupSelectNone');
+    var $sortAsc = document.getElementById('popupSortAsc');
+    var $sortDesc = document.getElementById('popupSortDesc');
+
+    function getFilteredValues() {
+      var search = $search.value.toLowerCase();
+      return distinctValues.filter(function(v) {
+        return v.toLowerCase().indexOf(search) !== -1;
+      });
+    }
+
+    function renderValueList() {
+      var filtered = getFilteredValues();
+      $valueList.innerHTML = '';
+
+      filtered.forEach(function(val) {
+        var item = document.createElement('div');
+        item.className = 'filter-value-item';
+        var checked = tempSelected.has(val);
+        var label = val === '' ? '(Vazios)' : val;
+        var count = valueCounts[val] || 0;
+        item.innerHTML =
+          '<input type="checkbox" ' + (checked ? 'checked' : '') + '>' +
+          '<span>' + util.escapeHtml(label) + '</span>' +
+          '<span class="value-count">' + count + '</span>';
+        item.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (tempSelected.has(val)) tempSelected.delete(val);
+          else tempSelected.add(val);
+          renderValueList();
+        });
+        $valueList.appendChild(item);
+      });
+    }
+
+    $search.addEventListener('input', renderValueList);
+    renderValueList();
+
+    $close.addEventListener('click', DASH.closeMenu);
+
+    if ($sortAsc) {
+      $sortAsc.addEventListener('click', function() {
+        state.sort = { key: col.key, dir: 'asc' };
+        DASH.render();
+      });
+    }
+
+    if ($sortDesc) {
+      $sortDesc.addEventListener('click', function() {
+        state.sort = { key: col.key, dir: 'desc' };
+        DASH.render();
+      });
+    }
+
+    if ($selectAll) {
+      $selectAll.addEventListener('click', function() {
+        getFilteredValues().forEach(function(v) { tempSelected.add(v); });
+        renderValueList();
+      });
+    }
+
+    if ($selectNone) {
+      $selectNone.addEventListener('click', function() {
+        getFilteredValues().forEach(function(v) { tempSelected.delete(v); });
+        renderValueList();
+      });
+    }
+
+    $clear.addEventListener('click', function() {
+      state.menuFilters[col.key] = {
+        operator: 'contains',
+        value: '',
+        selected: new Set(),
+        includeBlanks: true,
+        mode: 'all'
+      };
+      DASH.closeMenu();
+      DASH.saveFilterState();
+      DASH.render();
+    });
+
+    $apply.addEventListener('click', function() {
+      if (tempSelected.size === 0) {
+        menu.mode = 'none';
+        menu.selected = new Set();
+      } else if (tempSelected.size === distinctValues.length) {
+        menu.mode = 'all';
+        menu.selected = new Set();
+      } else {
+        menu.mode = 'subset';
+        menu.selected = new Set(tempSelected);
+      }
+      menu.includeBlanks = tempSelected.has('') || menu.mode === 'all';
+      state.currentPage = 1;
+      DASH.closeMenu();
+      DASH.saveFilterState();
+      DASH.render();
+    });
+  };
+
+  DASH.closeMenu = function() {
+    var d = DASH.dom;
+    d.$popup.classList.remove('show');
+  };
+
+  // ============================================================
+  // EVENTS
+  // ============================================================
+  DASH.bindFilterEvents = function() {
+    var d = DASH.dom;
+    if (d.$activeFiltersBar) {
+      d.$activeFiltersBar.addEventListener('click', function(e) {
+        var clearBtn = e.target.closest('[data-action="clear-all"]');
+        if (clearBtn) {
+          DASH.clearAllFilters();
+          return;
+        }
+        var btn = e.target.closest('.filter-tag-remove');
+        if (!btn) return;
+        var tag = btn.closest('.filter-tag');
+        if (!tag) return;
+        var colKey = tag.getAttribute('data-col');
+        
+        // Tratamento especial para filtro de período
+        if (colKey === 'DTNEG_RANGE') {
+          clearDateRange();
+          // Não precisa chamar loadData - clearDateRange já aplica filtro local
+          return;
+        }
+        if (!colKey || !DASH.state.menuFilters[colKey]) return;
+        DASH.state.menuFilters[colKey].selected = new Set();
+        DASH.state.menuFilters[colKey].mode = 'all';
+        DASH.state.menuFilters[colKey].includeBlanks = true;
+        DASH.state.currentPage = 1;
+        DASH.saveFilterState();
+        DASH.render();
+      });
+    }
+
+    document.addEventListener('click', function(e) {
+      if (d.$popup.classList.contains('show') && !d.$popup.contains(e.target)) {
+        DASH.closeMenu();
+      }
+    });
+  };
+
+})();
+
+/* ==========================================================
+   #PAGINATION
+   ========================================================== */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+  var util = DASH.util;
+
+  // Códigos excluídos pelo Filtro Rápido
+  var FILTRO_RAPIDO_CODIGOS_EXCLUIR = [
+    1035, 1341, 755, 866, 898, 1062, 1360, 1471, 827, 1335,
+    1116, 892, 1139, 1010, 792, 1272, 947, 1199, 1200, 1385,
+    1079, 1428, 1034, 1048, 784, 1187, 938
+  ];
+
+  // Data mínima para filtro rápido DTNEG
+  var FILTRO_RAPIDO_DTNEG_MIN = '01/01/2026';
+  var FILTRO_RAPIDO_DTNEG_MIN_TS = DASH.util.parseDataParaTimestamp(FILTRO_RAPIDO_DTNEG_MIN);
+
+  DASH.getVisibleRows = function() {
+  var state = DASH.state;
+  var dados = DASH.DATA_FULL.slice();
+  
+  // 1. Filtro de período (se ativo)
+  if (state.dateRange.dtIni && state.dateRange.dtFim) {
+    dados = DASH.filtrarPorPeriodo(dados, 'DTNEG', state.dateRange.dtIni, state.dateRange.dtFim);
+  }
+  
+  // 2. Filtro Rápido (se ativo)
+  if (state.filtroRapido) {
+    dados = dados.filter(function(row) {
+      // Excluir códigos específicos
+      var codigo = parseInt(util.normalize(row.CODIGO), 10);
+      if (FILTRO_RAPIDO_CODIGOS_EXCLUIR.indexOf(codigo) !== -1) return false;
+      
+      // Excluir produtos com CALOTA, TAPETE, ARREBITE
+      var descrprod = util.normalize(row.DESCRPROD).toUpperCase();
+      if (descrprod.indexOf('CALOTA') !== -1) return false;
+      if (descrprod.indexOf('TAPETE') !== -1) return false;
+      if (descrprod.indexOf('ARREBITE') !== -1) return false;
+      
+      // Apenas SUGESTAO_QTD > 0
+      var sugestao = parseFloat(util.normalize(row.SUGESTAO_QTD)) || 0;
+      if (sugestao <= 0) return false;
+      
+      // Apenas DTNEG > '01/01/2026'
+      var dtneg = row.DTNEG;
+      if (dtneg) {
+        var tsKey = 'DTNEG_TS';
+        var tsRow = row[tsKey];
+        if (tsRow == null) {
+          tsRow = DASH.util.parseDataParaTimestamp(dtneg);
+          row[tsKey] = tsRow;
+        }
+        if (tsRow === 0 || tsRow <= FILTRO_RAPIDO_DTNEG_MIN_TS) return false;
+      } else {
+        // Se DTNEG está vazio/null, excluir do filtro rápido
+        return false;
+      }
+      
+      // Apenas registros sem decisão (DECISAO null/vazio)
+      var decisao = util.normalize(row.DECISAO);
+      if (decisao && decisao.trim() !== '') return false;
+      
+      return true;
+    });
+  }
+  
+  // 2.5. Filtro A COMPRAS (se ativo)
+  if (state.filtroACompras) {
+    dados = dados.filter(function(row) {
+      var decisao = util.normalize(row.DECISAO).toUpperCase();
+      return decisao === 'ANALISAR' || decisao === 'PROCESSAR';
+    });
+  }
+  
+  // 3. Aplica filtros de visualização (toggle + coluna + busca)
+  dados = DASH.filterData(dados);
+  
+  // 4. Ordena (por SUGESTAO_QTD desc se filtro rápido ativo)
+  if (state.filtroRapido) {
+    return dados.sort(function(a, b) {
+      var sugestaoA = parseFloat(util.normalize(a.SUGESTAO_QTD)) || 0;
+      var sugestaoB = parseFloat(util.normalize(b.SUGESTAO_QTD)) || 0;
+      return sugestaoB - sugestaoA; // Maior para menor
+    });
+  }
+  
+  return DASH.sortData(dados);
+  };
+
+  DASH.getPagedRows = function() {
+    var state = DASH.state;
+    var all = DASH.getVisibleRows();
+    var start = (state.currentPage - 1) * state.pageSize;
+    return all.slice(start, start + state.pageSize);
+  };
+
+  DASH.getTotalPages = function() {
+    var state = DASH.state;
+    return Math.ceil(DASH.getVisibleRows().length / state.pageSize) || 1;
+  };
+
+  DASH.updatePagination = function() {
+    var state = DASH.state;
+    var d = DASH.dom;
+    var total = DASH.getTotalPages();
+    state.currentPage = util.clamp(state.currentPage, 1, total);
+
+    d.$pageInfo.textContent = state.currentPage + ' de ' + total;
+    d.$btnPrev.disabled = state.currentPage <= 1;
+    d.$btnNext.disabled = state.currentPage >= total;
+
+    var visible = DASH.getVisibleRows();
+    d.$totalInfo.textContent = visible.length + ' registro(s)';
+    d.$selectionInfo.textContent = state.selectedIds.size + ' selecionado(s)';
+  };
+
+})();
+
+/* ==========================================================
+   #RENDER
+   ========================================================== */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+  var util = DASH.util;
+
+  // ============================================================
+  // TOAST & FLASH
+  // ============================================================
+  DASH.showToast = function(msg, ms) {
+    ms = ms || 1800;
+    var d = DASH.dom;
+    if (!d.$appToast) return;
+    d.$appToast.textContent = msg || '';
+    d.$appToast.classList.add('show');
+    clearTimeout(DASH.showToast._t);
+    DASH.showToast._t = setTimeout(function() {
+      d.$appToast.classList.remove('show');
+    }, ms);
+  };
+
+  DASH.flashOk = function(el, ms) {
+    ms = ms || 900;
+    if (!el) return;
+    el.classList.add('flash-ok');
+    setTimeout(function() {
+      el.classList.remove('flash-ok');
+    }, ms);
+  };
+
+  // ============================================================
+  // TOOLTIP SIMILARES
+  // ============================================================
+  DASH.mostrarTip = function(el, html, evt) {
+    var d = DASH.dom;
+    if (!d.$tip) return;
+    d.$tip.innerHTML = html;
+    d.$tip.classList.add('show');
+    var padding = 12;
+    var x = evt ? evt.clientX + padding : null;
+    var y = evt ? evt.clientY + padding : null;
+
+    if (x === null || y === null) {
+      var r = el.getBoundingClientRect();
+      x = r.right + 8;
+      y = r.top - 4;
+    }
+
+    if (x + 320 > innerWidth) x = innerWidth - 320 - 8;
+    if (y + d.$tip.offsetHeight > innerHeight) y = innerHeight - d.$tip.offsetHeight - 8;
+    d.$tip.style.cssText = 'left:' + Math.max(8, x) + 'px;top:' + Math.max(8, y) + 'px';
+  };
+
+  DASH.esconderTip = function() {
+    var d = DASH.dom;
+    if (d.$tip) d.$tip.classList.remove('show');
+  };
+
+  DASH.getSimilares = function(row) {
+    var util = DASH.util;
+    var ref = util.normalize(row.COMPLDESC).trim();
+    var cod = util.normalize(row.CODPROD).trim();
+    if (!ref) return [];
+
+    var resultado = [];
+    DASH.DATA_FULL.forEach(function(r) {
+      // CORRIGIDO: Não filtra por PERCEBIDO (todas as linhas)
+      if (util.normalize(r.COMPLDESC).trim() !== ref) return;
+      if (util.normalize(r.CODPROD).trim() === cod) return; // Exclui o atual
+
+      var qtd = Number(r.ESTOQUE) || 0; // Mantém valor real
+      var codprod = util.normalize(r.CODPROD).trim();
+      var marca = util.normalize(r.MARCA).trim() || '(sem marca)';
+      var percebido = util.normalize(r.PERCEBIDO).trim();
+
+      resultado.push({ codprod: codprod, marca: marca, qtd: qtd, percebido: percebido });
+    });
+
+    return resultado.sort(function(a, b) { return b.qtd - a.qtd; });
+  };
+
+  DASH.getLinhaMarcas = function(row) {
+    var util = DASH.util;
+    var ref = util.normalize(row.COMPLDESC).trim();
+    var percebido = util.normalize(row.PERCEBIDO).trim();
+    var codAtual = util.normalize(row.CODPROD).trim();
+    if (!ref) return [];
+
+    var byProduto = new Map();
+    DASH.DATA_FULL.forEach(function(r) {
+      if (util.normalize(r.COMPLDESC).trim() !== ref) return;
+      if (util.normalize(r.PERCEBIDO).trim() !== percebido) return;
+
+      var qtd = Number(r.ESTOQUE) || 0; // Mantém valor real
+      var codprod = util.normalize(r.CODPROD).trim();
+      var marca = util.normalize(r.MARCA).trim() || '(sem marca)';
+      var isAtual = codprod === codAtual;
+
+      byProduto.set(codprod, { marca: marca, qtd: qtd, isAtual: isAtual, codsis: codprod });
+    });
+
+    var values = [];
+    byProduto.forEach(function(val) { values.push(val); });
+    return values
+      .sort(function(a, b) {
+        if (a.isAtual) return -1;
+        if (b.isAtual) return 1;
+        return b.qtd - a.qtd;
+      });
+  };
+
+  DASH.tipHtmlLinha = function(ref, itens, rowData) {
+    var util = DASH.util;
+
+    // USA O VALOR DO BANCO (não recalcula)
+    var totalGeral = rowData ? (Number(rowData.LIN_ETQTT) || 0) : 0;
+
+    var header = '<div class="tooltip-similar-header">Linha — Ref: ' + util.escapeHtml(ref) +
+      ' (LIN: ' + util.formatValue(totalGeral, 'number') + ' un.)</div>';
+
+    if (!itens || itens.length === 0) {
+      return header + '<div style="padding:8px 0;color:#6b7280">Nenhum produto encontrado nesta linha.</div>';
+    }
+
+    // Filtra: mostra produtos com estoque > 0 OU o produto atual
+    var itensVisiveis = itens.filter(function(r) {
+      return r.isAtual || r.qtd > 0;
+    });
+
+    var lista = itensVisiveis.map(function(r) {
+      var qtdExibir = util.estoqueExibir(r.qtd); // Negativo vira 0
+      var corEtq = qtdExibir > 0 ? 'color:#22c55e;font-weight:600' : 'color:#9ca3af';
+      var tagAtual = r.isAtual ? ' <span style="color:#f59e0b;font-weight:600">(ATUAL)</span>' : '';
+      return '<div style="padding:5px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">' +
+        '<span><b style="color:var(--pri)">' + util.escapeHtml(r.marca) + tagAtual + '</b></span>' +
+        '<span style="' + corEtq + '">' + util.formatValue(qtdExibir, 'number') + ' un.</span>' +
+        '</div>';
+    }).join('');
+
+    // Conta só produtos com estoque > 0
+    var produtosComEstoque = itens.filter(function(r) { return r.qtd > 0; }).length;
+
+    var footer = '<div style="padding:6px 0;font-weight:600;text-align:right;border-top:2px solid #ddd;margin-top:4px">' +
+      'Total: ' + util.formatValue(totalGeral, 'number') + ' un. em ' + produtosComEstoque + ' produto(s)' +
+      '</div>';
+
+    return header + lista + footer;
+  };
+
+  DASH.tipHtml = function(ref, itens, simTotal, rowData) {
+    var util = DASH.util;
+
+    // USA O VALOR DO BANCO (não recalcula)
+    var totalGeral = rowData ? (Number(rowData.SIM_ETQTT) || 0) : 0;
+
+    var header = '<div class="tooltip-similar-header">Similares — Ref: ' + util.escapeHtml(ref) +
+      ' (SIM: ' + util.formatValue(totalGeral, 'number') + ' un.)</div>';
+
+    // Busca TODOS os similares (sem filtrar PERCEBIDO)
+    var todosSimulares = DASH.getSimilares(rowData);
+
+    // Filtra apenas produtos com estoque > 0 para exibição
+    var similaresVisiveis = todosSimulares.filter(function(r) {
+      return r.qtd > 0;
+    });
+
+    if (similaresVisiveis.length === 0) {
+      return header + '<div style="padding:8px 0;color:#6b7280">Nenhum similar com estoque encontrado.</div>';
+    }
+
+    var lista = similaresVisiveis.map(function(r) {
+      var qtdExibir = util.estoqueExibir(r.qtd);
+      var corEtq = 'color:#22c55e;font-weight:600';
+
+      return '<div style="padding:5px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">' +
+        '<span><b style="color:var(--pri)">' + util.escapeHtml(r.marca) + '</b></span>' +
+        '<span style="' + corEtq + '">' + util.formatValue(qtdExibir, 'number') + ' un.</span>' +
+        '</div>';
+    }).join('');
+
+    var footer = '<div style="padding:6px 0;font-weight:600;text-align:right;border-top:2px solid #ddd;margin-top:4px">' +
+      'Total: ' + util.formatValue(totalGeral, 'number') + ' un. em ' + similaresVisiveis.length + ' produto(s)' +
+      '</div>';
+
+    return header + lista + footer;
+  };
+
+  // ============================================================
+  // GRID TEMPLATE
+  // ============================================================
+  DASH.getVisibleCols = function() {
+    return DASH.COLS.filter(function(c) { return c.visible; });
+  };
+
+  DASH.getGridTemplate = function() {
+    var visibleCols = DASH.getVisibleCols();
+    var cols = ['var(--select-width)'].concat(visibleCols.map(function(c) {
+      return c.width + 'px';
+    }));
+    return cols.join(' ');
+  };
+
+  DASH.getCompactWidth = function(col) {
+    var keyMap = {
+      DESCRPROD: 200,
+      REFFORN: 110,
+      MARCA: 100,
+      CODIGO: 100,
+      DECISAO: 100,
+      COTACAO_STATUS: 120,
+      PRIORIDADE: 100
+    };
+    var typeMap = {
+      number: 80,
+      currency: 100,
+      date: 95,
+      status: 100,
+      curva: 80
+    };
+    var base = keyMap[col.key] || typeMap[col.type] || 120;
+    var label = col.label || col.key || '';
+    var labelWidth = label ? (label.length * 7 + 28) : 0;
+    return util.clamp(Math.max(base, labelWidth), 70, 260);
+  };
+
+  DASH.applyCompactWidths = function() {
+    for (var i = 0; i < DASH.COLS.length; i++) {
+      var col = DASH.COLS[i];
+      col.width = DASH.getCompactWidth(col);
+    }
+  };
+
+
+  DASH.applyTemplateToRows = function() {
+    var d = DASH.dom;
+    var template = DASH.getGridTemplate();
+    if (!d.$grid) return;
+    var rows = d.$grid.querySelectorAll('.row');
+    for (var i = 0; i < rows.length; i++) {
+      rows[i].style.gridTemplateColumns = template;
+    }
+  };
+
+  DASH.getColLabel = function(key) {
+    var col = null;
+    for (var i = 0; i < DASH.COLS.length; i++) {
+      if (DASH.COLS[i].key === key) {
+        col = DASH.COLS[i];
+        break;
+      }
+    }
+    return col ? col.label : key;
+  };
+
+  // ============================================================
+  // ORDENAÇÃO
+  // ============================================================
+  DASH.sortData = function(rows) {
+    var state = DASH.state;
+    var key = state.sort.key;
+    var dir = state.sort.dir;
+
+    if (!key || !dir) return rows;
+
+    var multiplier = dir === 'asc' ? 1 : -1;
+
+    // Encontra a coluna para verificar o tipo
+    var col = null;
+    for (var i = 0; i < DASH.COLS.length; i++) {
+      if (DASH.COLS[i].key === key) {
+        col = DASH.COLS[i];
+        break;
+      }
+    }
+    var colType = col ? col.type : null;
+
+    return rows.slice().sort(function(a, b) {
+      var va = a[key];
+      var vb = b[key];
+
+      // TIPO DATE: usa parsing específico
+      if (colType === 'date') {
+        var tsKey = key + '_TS';
+        var ta = a[tsKey];
+        var tb = b[tsKey];
+        if (ta == null) ta = DASH.util.parseDataParaTimestamp(va);
+        if (tb == null) tb = DASH.util.parseDataParaTimestamp(vb);
+        
+        // Trata datas nulas/vazias: coloca no final da ordenação
+        if (ta === 0 && tb === 0) return 0;
+        if (ta === 0) return 1 * multiplier;  // NULL/vazio vai para o final
+        if (tb === 0) return -1 * multiplier;  // NULL/vazio vai para o final
+        
+        return (ta - tb) * multiplier;
+      }
+
+      // TIPO NUMÉRICO: compara como número
+      if (colType === 'number' || colType === 'integer' || colType === 'currency' || colType === 'decimal') {
+        var na = DASH.util.parsePtNumber(va);
+        var nb = DASH.util.parsePtNumber(vb);
+        return (na - nb) * multiplier;
+      }
+
+      // TENTATIVA NUMÉRICA para colunas sem tipo definido
+      var na = Number(va);
+      var nb = Number(vb);
+      if (!isNaN(na) && !isNaN(nb) && va !== '' && va !== null && vb !== '' && vb !== null) {
+        return (na - nb) * multiplier;
+      }
+
+      // FALLBACK STRING: comparação alfabética
+      var sa = DASH.util.normalize(va).toLowerCase();
+      var sb = DASH.util.normalize(vb).toLowerCase();
+      if (sa < sb) return -1 * multiplier;
+      if (sa > sb) return 1 * multiplier;
+      return 0;
+    });
+
+  };
+
+  DASH.toggleSort = function(colKey) {
+    var state = DASH.state;
+    if (state.sort.key !== colKey) {
+      // Coluna diferente: inicia com ASC
+      state.sort = { key: colKey, dir: 'asc' };
+    } else if (state.sort.dir === 'asc') {
+      // Estava ASC: muda para DESC
+      state.sort = { key: colKey, dir: 'desc' };
+    } else {
+      // Estava DESC: remove ordenação (volta ao padrão)
+      state.sort = { key: null, dir: null };
+    }
+    DASH.render();
+  };
+
+  // ============================================================
+  // RENDERIZAÇÃO PRINCIPAL
+  // ============================================================
+  DASH.render = function() {
+    var d = DASH.dom;
+    var state = DASH.state;
+    try {
+      var template = DASH.getGridTemplate();
+      d.$grid.innerHTML = '';
+
+      // ----- HEADER -----
+      var header = document.createElement('div');
+      header.className = 'row row-header';
+      header.style.gridTemplateColumns = template;
+
+      var selectAllCell = document.createElement('div');
+      selectAllCell.className = 'cell cell-select';
+      var cbAll = document.createElement('input');
+      cbAll.type = 'checkbox';
+
+      var pageRows = DASH.getPagedRows();
+      cbAll.checked = pageRows.length > 0 && pageRows.every(function(r) {
+        return state.selectedIds.has(r.CODPROD);
+      });
+
+      cbAll.addEventListener('change', function() {
+        if (cbAll.checked) {
+          pageRows.forEach(function(r) { state.selectedIds.add(r.CODPROD); });
+        } else {
+          pageRows.forEach(function(r) { state.selectedIds.delete(r.CODPROD); });
+        }
+        DASH.renderBody();
+        DASH.updatePagination();
+      });
+
+      selectAllCell.appendChild(cbAll);
+      header.appendChild(selectAllCell);
+
+      var visibleCols = DASH.getVisibleCols();
+      visibleCols.forEach(function(col, idx) {
+        var colIdx = DASH.COLS.indexOf(col);
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        if (col.key === 'LIN_ETQTT') cell.classList.add('cell-linha');
+        if (col.key === 'SIM_ETQTT') cell.classList.add('cell-similar');
+        cell.setAttribute('data-col-idx', colIdx);
+
+        var content = document.createElement('div');
+        content.className = 'header-content';
+
+        // Drag handle (6 pontinhos)
+        var dragHandle = document.createElement('div');
+        dragHandle.className = 'drag-handle';
+        dragHandle.draggable = true;
+        dragHandle.innerHTML =
+          '<div class="dots-row"><div class="dot"></div><div class="dot"></div></div>' +
+          '<div class="dots-row"><div class="dot"></div><div class="dot"></div></div>' +
+          '<div class="dots-row"><div class="dot"></div><div class="dot"></div></div>';
+
+        // Label (clicável para ordenar, NÃO arrastável)
+        var label = document.createElement('div');
+        label.className = 'header-label';
+
+        var labelSpan = document.createElement('span');
+        labelSpan.textContent = col.label;
+        labelSpan.title = col.label;
+        label.appendChild(labelSpan);
+
+        // Sort indicator (seta única dentro do label)
+        var sortInd = document.createElement('span');
+        sortInd.className = 'sort-indicator';
+        if (state.sort.key === col.key) {
+          sortInd.classList.add('active');
+          if (state.sort.dir === 'asc') {
+            sortInd.classList.add('asc');
+            sortInd.textContent = '▲';
+          } else {
+            sortInd.classList.add('desc');
+            sortInd.textContent = '▼';
+          }
+        }
+        label.appendChild(sortInd);
+
+        // Click no label cicla ordenação
+        label.addEventListener('click', function(e) {
+          e.stopPropagation();
+          DASH.toggleSort(col.key);
+        });
+
+        var filterBtn = document.createElement('button');
+        filterBtn.className = 'filter-btn';
+        var mf = state.menuFilters[col.key];
+        var hasFilter = mf && mf.mode && mf.mode !== 'all';
+        if (hasFilter) filterBtn.classList.add('has-filter');
+        filterBtn.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+            '<path d="M3 5h18l-7 8v5l-4 2v-7L3 5z"></path>' +
+          '</svg>';
+        filterBtn.title = 'Filtro';
+        filterBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          DASH.openMenu(col, filterBtn);
+        });
+
+        // Drag & Drop (apenas no handle)
+        dragHandle.addEventListener('dragstart', function(e) {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', colIdx);
+          cell.classList.add('dragging-col');
+          state.dragColumn = colIdx;
+        });
+
+        dragHandle.addEventListener('dragend', function() {
+          cell.classList.remove('dragging-col');
+          if (d.$grid) {
+            var dragEls = d.$grid.querySelectorAll('.drag-over');
+            for (var i = 0; i < dragEls.length; i++) {
+              dragEls[i].classList.remove('drag-over');
+            }
+          }
+          state.dragColumn = null;
+        });
+
+        cell.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          cell.classList.add('drag-over');
+        });
+
+        cell.addEventListener('dragleave', function() {
+          cell.classList.remove('drag-over');
+        });
+
+        cell.addEventListener('drop', function(e) {
+          e.preventDefault();
+          var fromIdx = state.dragColumn;
+          var toIdx = colIdx;
+          if (fromIdx !== null && fromIdx !== toIdx) {
+            var moved = DASH.COLS.splice(fromIdx, 1)[0];
+            DASH.COLS.splice(toIdx, 0, moved);
+            DASH.render();
+          }
+          cell.classList.remove('drag-over');
+          state.dragColumn = null;
+        });
+
+        // Resizer
+        var resizer = document.createElement('div');
+        resizer.className = 'resizer';
+        resizer.addEventListener('mousedown', function(e) { DASH.startResize(e, colIdx); });
+
+        content.appendChild(dragHandle);
+        content.appendChild(label);
+        content.appendChild(filterBtn);
+        content.appendChild(resizer);
+        cell.appendChild(content);
+        header.appendChild(cell);
+      });
+
+      d.$grid.appendChild(header);
+
+      DASH.renderBody();
+      DASH.updatePagination();
+      DASH.renderActiveFilters();
+    } catch (err) {
+      console.error('❌ Erro no render()', err);
+      try {
+        d.$loading.style.display = 'flex';
+        d.$loading.innerHTML =
+          '<div style="color:#dc2626;background:#fee2e2;padding:20px;border-radius:8px;text-align:left;margin:20px;">' +
+            '<b>❌ Erro ao renderizar a grade</b><br>' +
+            util.escapeHtml(util.getErrorMessage(err)) +
+          '</div>';
+      } catch (e) {}
+      try { DASH.showToast('❌ Erro ao renderizar (ver console)', 3000); } catch (e2) {}
+    }
+  };
+
+  // ============================================================
+  // RENDERIZAÇÃO DO CORPO (LINHAS DE DADOS)
+  // ============================================================
+  DASH.renderBody = function() {
+    var d = DASH.dom;
+    var state = DASH.state;
+    var util = DASH.util;
+    try {
+      var existing = d.$grid.querySelectorAll('.row-data');
+      for (var i = 0; i < existing.length; i++) {
+        existing[i].remove();
+      }
+
+      var template = DASH.getGridTemplate();
+      var rows = DASH.getPagedRows();
+
+      rows.forEach(function(rowData) {
+        var row = document.createElement('div');
+        row.className = 'row row-data';
+        
+        // Cor de fundo baseada na PRIORIDADE
+        var prioridadeRow = DASH.util.normalize(rowData['PRIORIDADE']).toUpperCase();
+        if (prioridadeRow) {
+          row.setAttribute('data-prioridade', prioridadeRow);
+        }
+
+        // Cor verde se SUGESTAO > 0
+        var sugestaoQtd = DASH.util.parsePtNumber(rowData['SUGESTAO_QTD']);
+        if (sugestaoQtd > 0) {
+          row.setAttribute('data-sugestao', sugestaoQtd);
+        }
+        
+        if (state.selectedIds.has(rowData.CODPROD)) row.classList.add('selected');
+        row.style.gridTemplateColumns = template;
+
+        // Checkbox de seleção
+        var selectCell = document.createElement('div');
+        selectCell.className = 'cell cell-select';
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = state.selectedIds.has(rowData.CODPROD);
+        cb.addEventListener('change', function() {
+          if (cb.checked) state.selectedIds.add(rowData.CODPROD);
+          else state.selectedIds.delete(rowData.CODPROD);
+          row.classList.toggle('selected', cb.checked);
+          DASH.updatePagination();
+        });
+        selectCell.appendChild(cb);
+        row.appendChild(selectCell);
+
+        // Células de dados
+        var visibleCols = DASH.getVisibleCols();
+        visibleCols.forEach(function(col) {
+          var cell = document.createElement('div');
+          cell.className = 'cell';
+          if (col.align === 'right') cell.classList.add('cell-right');
+          if (col.align === 'center') cell.classList.add('cell-center');
+          if (col.key === 'LIN_ETQTT') cell.classList.add('cell-linha');
+          if (col.key === 'SIM_ETQTT') cell.classList.add('cell-similar');
+
+          var value = rowData[col.key];
+
+          // ============================================================
+          // COLUNAS EDITÁVEIS (DECISÃO)
+          // ============================================================
+          if (col.editable && col.type === 'decisao') {
+            var nureg = rowData.NUREG;
+            if (nureg) {
+              cell.innerHTML = '';
+              cell.appendChild(DASH.criarBotoesDecisao(nureg, value, rowData));
+            } else {
+              cell.innerHTML = '<span class="text-muted">—</span>';
+            }
+          }
+          // Coluna SUGESTAO_QTD: tag quantidade com bolinha
+          else if (col.key === 'SUGESTAO_QTD') {
+            var numSug = util.parsePtNumber(value);
+            
+            var wrap = document.createElement('div');
+            wrap.style.cssText = 'display:flex;align-items:center;justify-content:' +
+              (col.align === 'right' ? 'flex-end' : 'flex-start') + ';width:100%;gap:4px';
+            
+            // Seta verde se > 0 (mantém comportamento anterior)
+            if (numSug > 0) {
+              var seta = document.createElement('span');
+              seta.className = 'sugestao-arrow';
+              seta.textContent = '⬆';
+              seta.title = 'Sugestão de compra';
+              wrap.appendChild(seta);
+            }
+            
+            // Tag quantidade com bolinha
+            var tagSpan = document.createElement('span');
+            tagSpan.innerHTML = DASH.util.htmlTagQuantidade(value);
+            wrap.appendChild(tagSpan);
+            
+            cell.innerHTML = '';
+            cell.appendChild(wrap);
+            cell.title = util.normalize(value);
+          }
+          // Coluna SIM_ETQTT: número + lupa tooltip
+          else if (col.key === 'SIM_ETQTT') {
+            var simTotal = util.parsePtNumber(value);
+
+            var wrapSim = document.createElement('div');
+            wrapSim.style.cssText = 'display:flex;align-items:center;justify-content:' +
+              (col.align === 'right' ? 'flex-end' : 'flex-start') + ';width:100%;gap:6px';
+
+            // Número simples
+            var spanValSim = document.createElement('span');
+            spanValSim.innerHTML = util.formatValue(value, 'number');
+            wrapSim.appendChild(spanValSim);
+
+            // Lupa se tiver estoque
+            if (simTotal > 0) {
+              var lupaSim = document.createElement('span');
+              lupaSim.className = 'lupa-similar on';
+              lupaSim.textContent = '🔍';
+
+              var tipHtmlContentSim = DASH.tipHtml(rowData.COMPLDESC, DASH.getSimilares(rowData), simTotal, rowData);
+              lupaSim.addEventListener('mouseenter', function(e) {
+                DASH.mostrarTip(lupaSim, tipHtmlContentSim, e);
+              });
+              lupaSim.addEventListener('mousemove', function(e) {
+                DASH.mostrarTip(lupaSim, tipHtmlContentSim, e);
+              });
+              lupaSim.addEventListener('mouseleave', DASH.esconderTip);
+
+              wrapSim.appendChild(lupaSim);
+            }
+
+            cell.innerHTML = '';
+            cell.appendChild(wrapSim);
+            cell.title = util.normalize(value);
+          }
+          // Coluna LIN_ETQTT: número + lupa tooltip
+          else if (col.key === 'LIN_ETQTT') {
+            var linTotal = util.parsePtNumber(value);
+            var marcas = linTotal > 0 ? DASH.getLinhaMarcas(rowData) : [];
+
+            var wrapLin = document.createElement('div');
+            wrapLin.style.cssText = 'display:flex;align-items:center;justify-content:' +
+              (col.align === 'right' ? 'flex-end' : 'flex-start') + ';width:100%;gap:6px';
+
+            // Número simples
+            var spanValLin = document.createElement('span');
+            spanValLin.innerHTML = util.formatValue(value, 'number');
+            wrapLin.appendChild(spanValLin);
+
+            // Lupa se tiver estoque
+            if (linTotal > 0 && marcas.length > 0) {
+              var lupaLin = document.createElement('span');
+              lupaLin.className = 'lupa-similar on';
+              lupaLin.textContent = '🔍';
+
+              var tipHtmlContentLin = DASH.tipHtmlLinha(rowData.COMPLDESC, marcas, rowData);
+              lupaLin.addEventListener('mouseenter', function(e) {
+                DASH.mostrarTip(lupaLin, tipHtmlContentLin, e);
+              });
+              lupaLin.addEventListener('mousemove', function(e) {
+                DASH.mostrarTip(lupaLin, tipHtmlContentLin, e);
+              });
+              lupaLin.addEventListener('mouseleave', DASH.esconderTip);
+
+              wrapLin.appendChild(lupaLin);
+            }
+
+            cell.innerHTML = '';
+            cell.appendChild(wrapLin);
+            cell.title = util.normalize(value);
+          }
+          // Coluna MARCA: avatar colorido ou logo
+          else if (col.key === 'MARCA') {
+            var codMarca = Number(rowData.CODIGO) || 0;
+            cell.innerHTML = DASH.util.htmlMarca(value, codMarca);
+            cell.title = util.normalize(value);
+          }
+          // Coluna COTACAO_STATUS: pill com ícone
+          else if (col.key === 'COTACAO_STATUS') {
+            cell.innerHTML = DASH.util.htmlCotacaoStatus(value);
+            cell.title = util.normalize(value);
+          }
+          // Coluna PERCEBIDO: pill ouro/prata
+          else if (col.key === 'PERCEBIDO') {
+            cell.innerHTML = DASH.util.htmlPercebido(value);
+            cell.title = util.normalize(value);
+          }
+          // Coluna DECISAO: tag com ícone
+          else if (col.key === 'DECISAO') {
+            cell.innerHTML = DASH.util.htmlDecisao(value);
+            cell.title = util.normalize(value);
+          }
+          // Coluna PRIORIDADE: bolinhas de status
+          else if (col.key === 'PRIORIDADE') {
+            cell.innerHTML = DASH.util.htmlStatusPrioridade(value);
+            cell.title = util.normalize(value);
+          }
+          // Coluna ORG_COM_ULTCUSTO: formato em vermelho
+          else if (col.key === 'ORG_COM_ULTCUSTO') {
+            var cellContent = util.formatValue(value, col.type);
+            cell.innerHTML = '<span style="color: #dc2626; font-weight: 600;">' + cellContent + '</span>';
+            cell.title = util.normalize(value);
+          }
+          // Coluna COMPLDESC (Referência): fonte em destaque
+          else if (col.key === 'COMPLDESC') {
+            var cellContent = util.formatValue(value, col.type);
+            cell.innerHTML = '<span style="font-weight: 600; color: #1f2937;">' + cellContent + '</span>';
+            cell.title = util.normalize(value);
+          }
+          // Coluna DESCRPROD: texto + ícone de comentário
+          else if (col.key === 'DESCRPROD') {
+            var nrComent = String(rowData.NUREG || '');
+            var classeComent = (typeof DASH.comentarioIconClasse === 'function')
+              ? DASH.comentarioIconClasse(nrComent) : '';
+
+            var wrapDesc = document.createElement('div');
+            wrapDesc.className = 'cell-comment-wrap';
+
+            var spanDesc = document.createElement('span');
+            spanDesc.className = 'desc-text';
+            spanDesc.textContent = util.normalize(value);
+            wrapDesc.appendChild(spanDesc);
+
+            var iconComent = document.createElement('span');
+            iconComent.className = 'comment-icon' + (classeComent ? ' ' + classeComent : '');
+            iconComent.setAttribute('data-nureg', nrComent);
+            iconComent.innerHTML = '&#x1F4AC;';
+            iconComent.title = classeComent === 'all-resolved' ? 'Todos resolvidos'
+              : classeComent === 'has-comments' ? 'Ver comentários'
+              : 'Adicionar comentário';
+            wrapDesc.appendChild(iconComent);
+
+            cell.innerHTML = '';
+            cell.appendChild(wrapDesc);
+            cell.title = util.normalize(value);
+          }
+          // Outras colunas
+          else {
+            var cellContent = util.formatValue(value, col.type);
+            cell.innerHTML = cellContent;
+            cell.title = util.normalize(value);
+          }
+
+          // FASE 2: fechamento do else
+          // }
+
+          row.appendChild(cell);
+        });
+
+        d.$grid.appendChild(row);
+      });
+
+      // ============================================================
+      // EVENT DELEGATION: BOTÕES DE DECISÃO
+      // ============================================================
+      if (!DASH._decisaoEventoBound) {
+        DASH._decisaoEventoBound = true;
+
+        d.$grid.addEventListener('click', function(e) {
+          var btn = e.target.closest('.btn-dec');
+          if (!btn) return;
+
+          var nureg = btn.getAttribute('data-nureg');
+          var novoValor = btn.getAttribute('data-valor');
+          if (!nureg || !novoValor) return;
+
+          var container = btn.closest('.btns-decisao');
+          if (!container) return;
+
+          // Evita duplo clique
+          if (btn.classList.contains('is-loading')) return;
+
+          // Busca rowData
+          var rowData = null;
+          for (var i = 0; i < DASH.DATA.length; i++) {
+            if (String(DASH.DATA[i].NUREG) === String(nureg)) {
+              rowData = DASH.DATA[i];
+              break;
+            }
+          }
+          if (!rowData) return;
+
+          // Visual: loading
+          var todosBtn = container.querySelectorAll('.btn-dec');
+          for (var j = 0; j < todosBtn.length; j++) {
+            todosBtn[j].classList.add('is-loading');
+          }
+
+          // Salva
+          var cfg = DASH.DROPDOWN_CONFIG.decisao;
+          DASH.salvarDropdown(cfg, nureg, novoValor).then(function(ok) {
+            // Remove loading
+            for (var k = 0; k < todosBtn.length; k++) {
+              todosBtn[k].classList.remove('is-loading');
+            }
+
+            if (ok) {
+              // Atualiza dados locais
+              cfg.atualizarLocal(rowData, novoValor);
+
+              // Atualiza também em DATA_FULL para o filtro rápido funcionar
+              for (var i = 0; i < DASH.DATA_FULL.length; i++) {
+                if (String(DASH.DATA_FULL[i].NUREG) === String(nureg)) {
+                  cfg.atualizarLocal(DASH.DATA_FULL[i], novoValor);
+                  break;
+                }
+              }
+
+              // Atualiza visual
+              DASH.atualizarBotoesDecisao(container, novoValor);
+
+              // Feedback
+              DASH.flashOk(container);
+              DASH.showToast('✅ Decisão salva: ' + novoValor, 1500);
+
+              // Se filtro rápido ativo, re-renderiza para ocultar linha com decisão (delay de 1s para usuário ver a alteração)
+              if (DASH.state.filtroRapido) {
+                setTimeout(function() {
+                  DASH.render();
+                }, 1000);
+              }
+            }
+          });
+        });
+      }
+
+      // ============================================================
+      // EVENT DELEGATION: ÍCONE DE COMENTÁRIO
+      // ============================================================
+      if (!DASH._comentarioEventoBound) {
+        DASH._comentarioEventoBound = true;
+
+        d.$grid.addEventListener('click', function(e) {
+          var icon = e.target.closest('.comment-icon');
+          if (!icon) return;
+
+          var nureg = icon.getAttribute('data-nureg');
+          if (!nureg) return;
+
+          // Toggle: se já aberto neste NUREG, fecha
+          if (DASH._commentPopNureg === nureg) {
+            DASH.fecharComentarios();
+            return;
+          }
+
+          // Título do popover com código do produto
+          var titleEl = document.getElementById('commentPopTitle');
+          if (titleEl) {
+            var rowFound = null;
+            for (var i = 0; i < DASH.DATA.length; i++) {
+              if (String(DASH.DATA[i].NUREG) === nureg) { rowFound = DASH.DATA[i]; break; }
+            }
+            if (rowFound) {
+              titleEl.textContent = '\uD83D\uDCAC ' + (rowFound.CODPROD || '') + ' \u2014 ' +
+                (rowFound.COMPLDESC || '').substring(0, 25);
+            }
+          }
+
+          DASH.abrirComentarios(nureg, icon);
+        });
+      }
+    } catch (err) {
+      console.error('❌ Erro no renderBody()', err);
+      try { DASH.showToast('❌ Erro ao montar linhas (ver console)', 3500); } catch (e) {}
+    }
+  };
+
+  // ============================================================
+  // REDIMENSIONAMENTO DE COLUNAS
+  // ============================================================
+  var resizing = null;
+  var resizeRaf = 0;
+
+  DASH.startResize = function(e, colIdx) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    resizing = {
+      idx: colIdx,
+      startX: e.clientX,
+      startWidth: DASH.COLS[colIdx].width,
+      lastX: e.clientX
+    };
+
+    document.addEventListener('mousemove', onResize);
+    document.addEventListener('mouseup', stopResize);
+  };
+
+  function onResize(e) {
+    if (!resizing) return;
+    resizing.lastX = e.clientX;
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(function() {
+      resizeRaf = 0;
+      if (!resizing) return;
+      var diff = resizing.lastX - resizing.startX;
+      var newWidth = util.clamp(resizing.startWidth + diff, 60, 600);
+      DASH.COLS[resizing.idx].width = newWidth;
+      DASH.applyTemplateToRows();
+    });
+  }
+
+  function stopResize() {
+    if (resizeRaf) {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = 0;
+    }
+    if (resizing && typeof resizing.lastX === 'number') {
+      var diff = resizing.lastX - resizing.startX;
+      var newWidth = DASH.util.clamp(resizing.startWidth + diff, 60, 600);
+      DASH.COLS[resizing.idx].width = newWidth;
+      DASH.applyTemplateToRows();
+    }
+    resizing = null;
+    document.removeEventListener('mousemove', onResize);
+    document.removeEventListener('mouseup', stopResize);
+  }
+
+  // ============================================================
+  // DROPDOWN DE COLUNAS
+  // ============================================================
+  DASH.renderMenuCols = function() {
+    var d = DASH.dom;
+    if (!d.$menuCols) return;
+    d.$menuCols.innerHTML = DASH.COLS.map(function(col, i) {
+      return '<label class="dropdown-item">' +
+        '<input type="checkbox" ' + (col.visible ? 'checked' : '') + ' data-idx="' + i + '">' +
+        util.escapeHtml(col.label) +
+      '</label>';
+    }).join('');
+
+    var inputs = d.$menuCols.querySelectorAll('input');
+    for (var i = 0; i < inputs.length; i++) {
+      (function(cb) {
+        cb.addEventListener('change', function() {
+          DASH.COLS[cb.dataset.idx].visible = cb.checked;
+          DASH.render();
+        });
+      })(inputs[i]);
+    }
+  };
+
+})();
+
+/* ==========================================================
+   #EXPORT
+   ========================================================== */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+
+  DASH.exportCsv = function() {
+    var state = DASH.state;
+    var dataToExport = state.selectedIds.size > 0
+      ? DASH.DATA.filter(function(r) { return state.selectedIds.has(r.CODPROD); })
+      : DASH.getVisibleRows();
+
+    if (dataToExport.length === 0) {
+      alert('Nenhum dado para exportar!');
+      return;
+    }
+
+    var headers = DASH.COLS.map(function(c) { return c.label; });
+    var csvRows = [headers.join(';')];
+
+    dataToExport.forEach(function(row) {
+      var values = DASH.COLS.map(function(col) {
+        var val = row[col.key];
+        if (val == null) val = '';
+        val = String(val).replace(/"/g, '""');
+        return '"' + val + '"';
+      });
+      csvRows.push(values.join(';'));
+    });
+
+    var csvContent = csvRows.join('\n');
+    var blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'reposicao_v2_' + new Date().toISOString().slice(0, 10) + '.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ============================================================
+  // EXPORTAR TXT (agrupado por COMPLDESC + PERCEBIDO)
+  // ============================================================
+  DASH.exportTxt = function() {
+    var rows = DASH.getVisibleRows();
+
+    if (rows.length === 0) {
+      DASH.showToast('⚠️ Nenhum dado visível para exportar', 2000);
+      return;
+    }
+
+    var grupos = {};
+    DASH.DATA_FULL.forEach(function(r) {
+      var comp = DASH.util.normalize(r.COMPLDESC).trim();
+      var perc = DASH.util.normalize(r.PERCEBIDO).trim();
+      var ref = DASH.util.normalize(r.REFFORN).trim();
+      var marca = DASH.util.normalize(r.MARCA).trim();
+      if (!comp || !ref || !marca) return;
+
+      var chave = comp + '|' + perc;
+      if (!grupos[chave]) grupos[chave] = {};
+      var item = '*' + marca + '* ' + ref;
+      grupos[chave][item] = true;
+    });
+
+    var linhas = [];
+    var jaExportou = {};
+    var num = 1;
+
+    rows.forEach(function(row) {
+      var comp = DASH.util.normalize(row.COMPLDESC).trim();
+      var perc = DASH.util.normalize(row.PERCEBIDO).trim();
+      var chave = comp + '|' + perc;
+
+      if (jaExportou[chave]) return;
+      jaExportou[chave] = true;
+
+      var itens = grupos[chave] ? Object.keys(grupos[chave]).sort() : [];
+      var produtos = itens.join(' ou ');
+      var descr = DASH.util.normalize(row.DESCRPROD).trim();
+
+      linhas.push(num + '. [[ ' + produtos + ' ]]  ---  *' + descr + '*');
+      linhas.push(''); // linha em branco entre grupos
+      num++;
+    });
+
+    var conteudo = linhas.join('\n');
+
+    var blob = new Blob(['\ufeff' + conteudo], { type: 'text/plain;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'marcas_produto_' + new Date().toISOString().slice(0, 10) + '.txt';
+    link.click();
+    URL.revokeObjectURL(url);
+
+    DASH.showToast('✅ TXT exportado (' + (num - 1) + ' grupos)', 1500);
+  };
+
+  // ============================================================
+  // EXPORTAR XLS (HTML table disfarçada)
+  // ============================================================
+  DASH.exportXls = function() {
+    var state = DASH.state;
+    var dados = state.selectedIds.size > 0
+      ? DASH.DATA.filter(function(r) { return state.selectedIds.has(r.CODPROD); })
+      : DASH.getVisibleRows();
+
+    if (dados.length === 0) {
+      DASH.showToast('⚠️ Nenhum dado para exportar', 2000);
+      return;
+    }
+
+    var cols = DASH.getVisibleCols();
+    var esc = DASH.util.escapeHtml;
+
+    // Monta tabela HTML
+    var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
+      'xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head><meta charset="UTF-8">' +
+      '<style>' +
+      'table { border-collapse: collapse; }' +
+      'th { background: #1a73e8; color: #fff; font-weight: 700; padding: 6px 10px; border: 1px solid #ccc; font-size: 12px; }' +
+      'td { padding: 4px 8px; border: 1px solid #ddd; font-size: 11px; }' +
+      'tr:nth-child(even) td { background: #f9f9f9; }' +
+      '</style></head><body><table>';
+
+    // Header
+    html += '<tr>';
+    cols.forEach(function(c) {
+      html += '<th>' + esc(c.label) + '</th>';
+    });
+    html += '</tr>';
+
+    // Dados
+    dados.forEach(function(row) {
+      html += '<tr>';
+      cols.forEach(function(c) {
+        var val = row[c.key];
+        var str = val == null ? '' : String(val);
+
+        // Força texto no Excel para campos que parecem número mas são código
+        // (evita que o Excel transforme "0012345" em 12345)
+        var forcarTexto = (c.key === 'REFFORN' || c.key === 'COMPLDESC' || c.key === 'CODPROD');
+
+        if (forcarTexto) {
+          html += '<td style="mso-number-format:\'\\@\'">' + esc(str) + '</td>';
+        } else if (c.type === 'currency') {
+          var num = Number(val) || 0;
+          html += '<td style="text-align:right">' + num.toFixed(2).replace('.', ',') + '</td>';
+        } else if (c.type === 'number' || c.type === 'integer') {
+          html += '<td style="text-align:right">' + esc(str) + '</td>';
+        } else {
+          html += '<td>' + esc(str) + '</td>';
+        }
+      });
+      html += '</tr>';
+    });
+
+    html += '</table></body></html>';
+
+    var blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'reposicao_' + new Date().toISOString().slice(0, 10) + '.xls';
+    link.click();
+    URL.revokeObjectURL(url);
+
+    DASH.showToast('✅ XLS exportado (' + dados.length + ' registros)', 1500);
+  };
+
+  // ============================================================
+  // EXPORTAR MARCAS (agrupado por COMPLDESC + PERCEBIDO)
+  // ============================================================
+  DASH.exportMarcas = function() {
+    var rows = DASH.getVisibleRows();
+
+    if (rows.length === 0) {
+      DASH.showToast('⚠️ Nenhum dado visível para exportar', 2000);
+      return;
+    }
+
+    // Agrupa por COMPLDESC + PERCEBIDO
+    var grupos = {};
+    DASH.DATA_FULL.forEach(function(r) {
+      var comp = DASH.util.normalize(r.COMPLDESC).trim();
+      var perc = DASH.util.normalize(r.PERCEBIDO).trim();
+      var ref = DASH.util.normalize(r.REFFORN).trim();
+      var marca = DASH.util.normalize(r.MARCA).trim();
+      if (!comp || !ref) return;
+
+      var chave = comp + '|' + perc;
+      if (!grupos[chave]) grupos[chave] = {};
+      var item = ref + ' - ' + marca;
+      grupos[chave][item] = true;
+    });
+
+    var esc = DASH.util.escapeHtml;
+    var html =
+      '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
+      'xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head><meta charset="UTF-8">' +
+      '<style>' +
+      'table { border-collapse: collapse; }' +
+      'th { background: #1a73e8; color: #fff; font-weight: 700; padding: 6px 10px; border: 1px solid #ccc; }' +
+      'td { padding: 4px 8px; border: 1px solid #ddd; vertical-align: top; white-space: pre-wrap; }' +
+      'tr:nth-child(even) td { background: #f9f9f9; }' +
+      '</style></head><body><table>';
+
+    html += '<tr><th>PRODUTOS</th><th>DESCR</th></tr>';
+
+    // Agrupa por COMPLDESC+PERCEBIDO para gerar 1 linha por grupo
+    var jaExportou = {};
+
+    rows.forEach(function(row) {
+      var comp = DASH.util.normalize(row.COMPLDESC).trim();
+      var perc = DASH.util.normalize(row.PERCEBIDO).trim();
+      var chave = comp + '|' + perc;
+
+      // Evita duplicar grupo
+      if (jaExportou[chave]) return;
+      jaExportou[chave] = true;
+
+      var itens = grupos[chave] ? Object.keys(grupos[chave]).sort() : [];
+      // Cada marca em uma linha separada (quebra de linha dentro da célula)
+      var produtos = itens.join('\n');
+      var descr = row.DESCRPROD || '';
+
+      html += '<tr>' +
+        '<td style="mso-number-format:\'\\@\'">' + esc(produtos) + '</td>' +
+        '<td>' + esc(descr) + '</td>' +
+        '</tr>';
+    });
+
+    html += '</table></body></html>';
+
+    var blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'marcas_produto_' + new Date().toISOString().slice(0, 10) + '.xls';
+    link.click();
+    URL.revokeObjectURL(url);
+
+    DASH.showToast('✅ XLS exportado (' + Object.keys(jaExportou).length + ' grupos)', 1500);
+  };
+
+})();
+
+/* ==========================================================
+   #MAIN
+   ========================================================== */
+window.DASH = window.DASH || {};
+
+(function() {
+  var DASH = window.DASH;
+
+  // ============================================================
+  // EVENTOS DA TOOLBAR
+  // ============================================================
+  var globalSearchTimer = null;
+  function bindToolbar() {
+    var d = DASH.dom;
+    var state = DASH.state;
+
+    // Busca global: apenas atualiza o estado (não executa busca)
+    // A busca real acontece ao clicar no botão PESQUISAR
+    d.$globalSearch.addEventListener('input', function() {
+      state.globalSearch = d.$globalSearch.value;
+      if (globalSearchTimer) {
+        clearTimeout(globalSearchTimer);
+      }
+      globalSearchTimer = setTimeout(function() {
+        if (DASH.DATA_FULL && DASH.DATA_FULL.length > 0) {
+          DASH.aplicarFiltrosLocais({ silent: true });
+        }
+      }, 250);
+    });
+
+    // Permite pressionar Enter para pesquisar
+    d.$globalSearch.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executarPesquisa();
+      }
+    });
+
+    d.$btnRefresh.addEventListener('click', function() {
+      state.selectedIds.clear();
+
+      // Limpa cache para forçar recarga completa
+      DASH.DATA_FULL = [];
+      DASH.DATA = [];
+
+      console.log('🔄 Refresh: recarregando do banco...');
+      DASH.loadData('todos');
+    });
+
+    d.$btnClear.addEventListener('click', function() {
+      DASH.clearAllFilters();
+    });
+
+    d.$btnExport.addEventListener('click', function() {
+      DASH.exportCsv();
+    });
+
+    // Botões de exportação TXT e XLS
+    if (d.$btnExportTxt) {
+      d.$btnExportTxt.addEventListener('click', function() {
+        DASH.exportTxt();
+      });
+    }
+    if (d.$btnExportXls) {
+      d.$btnExportXls.addEventListener('click', function() {
+        DASH.exportXls();
+      });
+    }
+
+    // Filtro Rápido - Toggle
+    d.$btnFiltroRapido.addEventListener('click', function() {
+      var state = DASH.state;
+      state.filtroRapido = !state.filtroRapido;
+      
+      // Toggle visual do botão
+      if (state.filtroRapido) {
+        d.$btnFiltroRapido.classList.add('active');
+        console.log('⚡ Filtro Rápido ATIVADO');
+      } else {
+        d.$btnFiltroRapido.classList.remove('active');
+        console.log('⚡ Filtro Rápido DESATIVADO');
+      }
+      
+      // Aplica filtros e re-renderiza
+      if (DASH.DATA_FULL && DASH.DATA_FULL.length > 0) {
+        DASH.aplicarFiltrosLocais();
+      }
+    });
+
+    // Botão A COMPRAS - Toggle
+    if (d.$btnACompras) {
+      d.$btnACompras.addEventListener('click', function() {
+        var state = DASH.state;
+        state.filtroACompras = !state.filtroACompras;
+        
+        // Toggle visual do botão
+        if (state.filtroACompras) {
+          d.$btnACompras.classList.add('active');
+          console.log('🛒 Filtro A COMPRAS ATIVADO');
+        } else {
+          d.$btnACompras.classList.remove('active');
+          console.log('🛒 Filtro A COMPRAS DESATIVADO');
+        }
+        
+        // Aplica filtros e re-renderiza
+        if (DASH.DATA_FULL && DASH.DATA_FULL.length > 0) {
+          DASH.aplicarFiltrosLocais();
+        }
+      });
+    }
+
+  }
+
+  // ============================================================
+  // EVENTOS DE PAGINAÇÃO
+  // ============================================================
+  function bindPagination() {
+    var d = DASH.dom;
+    var state = DASH.state;
+
+    d.$pageSize.addEventListener('change', function() {
+      state.pageSize = parseInt(d.$pageSize.value, 10);
+      state.currentPage = 1;
+      DASH.render();
+    });
+
+    d.$btnPrev.addEventListener('click', function() {
+      if (state.currentPage > 1) {
+        state.currentPage--;
+        DASH.render();
+      }
+    });
+
+    d.$btnNext.addEventListener('click', function() {
+      if (state.currentPage < DASH.getTotalPages()) {
+        state.currentPage++;
+        DASH.render();
+      }
+    });
+  }
+
+  // ============================================================
+  // DROPDOWN COLUNAS
+  // ============================================================
+  function bindColumnsMenu() {
+    var d = DASH.dom;
+    if (d.$btnToggleCols && d.$menuCols) {
+      d.$btnToggleCols.addEventListener('click', function(e) {
+        e.stopPropagation();
+        d.$menuCols.classList.toggle('show');
+        if (d.$menuCols.classList.contains('show')) DASH.renderMenuCols();
+      });
+
+      document.addEventListener('click', function() {
+        d.$menuCols.classList.remove('show');
+      });
+    }
+  }
+
+  // ============================================================
+  // EVENTOS GERAIS
+  // ============================================================
+  function bindGlobalEvents() {
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        DASH.esconderTip();
+        if (DASH.dom.$popup && DASH.dom.$popup.classList.contains('show')) {
+          DASH.closeMenu();
+        }
+      }
+    });
+
+    document.addEventListener('scroll', DASH.esconderTip, true);
+  }
+
+  // ============================================================
+  // DATE RANGE PICKER (LITEPICKER)
+  // ============================================================
+  var datePicker = null;
+
+  function initDatePicker() {
+    var d = DASH.dom;
+    var state = DASH.state;
+
+    if (!d.$inputDateRange || typeof Litepicker === 'undefined') {
+      console.warn('⚠️ Litepicker não carregado ou elemento não encontrado');
+      return;
+    }
+
+    datePicker = new Litepicker({
+      element: d.$inputDateRange,
+      singleMode: false,
+      numberOfMonths: 1,
+      numberOfColumns: 1,
+      format: 'DD/MM/YYYY',
+      lang: 'pt-BR',
+      autoApply: false,
+      showTooltip: true,
+      tooltipText: {
+        one: 'dia',
+        other: 'dias'
+      },
+      buttonText: {
+        apply: 'Aplicar',
+        cancel: 'Cancelar',
+        previousMonth: '<',
+        nextMonth: '>'
+      },
+      setup: function(picker) {
+        // Adiciona cards de opções rápidas
+        picker.on('show', function() {
+          setTimeout(function() {
+            var container = document.querySelector('.litepicker');
+            if (!container) {
+              console.warn('⚠️ Container do Litepicker não encontrado');
+              return;
+            }
+            
+            var quickOptions = container.querySelector('.litepicker-quick-options');
+            if (quickOptions) return; // Já existe
+            
+            quickOptions = document.createElement('div');
+            quickOptions.className = 'litepicker-quick-options';
+            quickOptions.innerHTML = 
+              '<div class="quick-option-card" data-range="hoje">Hoje</div>' +
+              '<div class="quick-option-card" data-range="ontem">Ontem</div>' +
+              '<div class="quick-option-card" data-range="ult7dias">Últ. 7 Dias</div>';
+            
+            var monthsContainer = container.querySelector('.container__months');
+            if (monthsContainer) {
+              container.insertBefore(quickOptions, monthsContainer);
+            } else {
+              container.insertBefore(quickOptions, container.firstChild);
+            }
+            
+            // Eventos dos cards
+            quickOptions.querySelectorAll('.quick-option-card').forEach(function(card) {
+              card.addEventListener('click', function() {
+                var range = this.getAttribute('data-range');
+                var hoje = new Date();
+                var dtIni, dtFim;
+                
+                hoje.setHours(0, 0, 0, 0);
+                
+                if (range === 'hoje') {
+                  dtIni = new Date(hoje);
+                  dtFim = new Date(hoje);
+                } else if (range === 'ontem') {
+                  dtIni = new Date(hoje);
+                  dtIni.setDate(dtIni.getDate() - 1);
+                  dtFim = new Date(dtIni);
+              } else if (range === 'ult7dias') {
+                dtFim = new Date(hoje);
+                dtIni = new Date(hoje);
+                dtIni.setDate(dtIni.getDate() - 6);
+              }
+              
+              if (dtIni && dtFim) {
+                // Remove classe ativa de todos
+                quickOptions.querySelectorAll('.quick-option-card').forEach(function(c) {
+                  c.classList.remove('active');
+                });
+                // Adiciona classe ativa no card clicado
+                this.classList.add('active');
+                
+                // Formata as datas
+                var formatDate = function(date) {
+                  var dia = String(date.getDate()).padStart(2, '0');
+                  var mes = String(date.getMonth() + 1).padStart(2, '0');
+                  var ano = date.getFullYear();
+                  return dia + '/' + mes + '/' + ano;
+                };
+                
+                var dtIniStr = formatDate(dtIni);
+                var dtFimStr = formatDate(dtFim);
+                
+                // Atualiza o estado diretamente
+                state.dateRange.dtIni = dtIniStr;
+                state.dateRange.dtFim = dtFimStr;
+                d.$inputDateRange.value = dtIniStr + ' - ' + dtFimStr;
+                
+                // Aplica no picker
+                picker.setDateRange(dtIni, dtFim);
+                
+                // Fecha o picker e recarrega dados
+                picker.hide();
+                state.currentPage = 1;
+                DASH.loadData('todos');
+              }
+            });
+          });
+          }, 50); // Delay para garantir que o DOM esteja pronto
+        });
+        picker.on('selected', function(date1, date2) {
+          var dtIni = date1.format('DD/MM/YYYY');
+          var dtFim = date2.format('DD/MM/YYYY');
+          
+          // Garante referência correta ao state global
+          DASH.state.dateRange.dtIni = dtIni;
+          DASH.state.dateRange.dtFim = dtFim;
+          
+          console.log('📅 Litepicker selected:', dtIni, '-', dtFim);
+          
+          d.$inputDateRange.value = dtIni + ' - ' + dtFim;
+          
+          // Limpa destaque dos botões de atalho (seleção manual)
+          limparBotoesAtivos();
+          
+          // NÃO recarrega automaticamente - usuário clica em PESQUISAR
+          console.log('📅 Período selecionado manualmente:', dtIni, '-', dtFim);
+        });
+        
+        picker.on('clear:selection', function() {
+          state.dateRange.dtIni = null;
+          state.dateRange.dtFim = null;
+          d.$inputDateRange.value = '';
+          
+          // Limpa destaque dos botões de atalho
+          limparBotoesAtivos();
+          
+          // NÃO recarrega automaticamente - usuário clica em PESQUISAR
+        });
+      }
+    });
+    
+    console.log('✅ Litepicker inicializado');
+  }
+
+  // ============================================================
+  // BOTÕES RÁPIDOS DE DATA
+  // ============================================================
+  function limparBotoesAtivos() {
+    var d = DASH.dom;
+    if (!d.$dateQuickButtons) return;
+    
+    var botoes = d.$dateQuickButtons.querySelectorAll('.date-quick-btn');
+    for (var i = 0; i < botoes.length; i++) {
+      botoes[i].classList.remove('active');
+    }
+  }
+
+  function atualizarBotoesAtivos(tipo) {
+    limparBotoesAtivos();
+    var d = DASH.dom;
+    if (!d.$dateQuickButtons) return;
+    
+    var btn = d.$dateQuickButtons.querySelector('[data-range="' + tipo + '"]');
+    if (btn) {
+      btn.classList.add('active');
+    }
+  }
+
+  function aplicarPeriodoRapido(tipo) {
+    var d = DASH.dom;
+    var state = DASH.state;
+    
+    var hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    var dtIni, dtFim;
+    
+    if (tipo === 'hoje') {
+      dtIni = new Date(hoje);
+      dtFim = new Date(hoje);
+    } else if (tipo === 'ontem') {
+      dtIni = new Date(hoje);
+      dtIni.setDate(dtIni.getDate() - 1);
+      dtFim = new Date(dtIni);
+    } else if (tipo === 'ult7dias') {
+      dtFim = new Date(hoje);
+      dtIni = new Date(hoje);
+      dtIni.setDate(dtIni.getDate() - 6);
+    }
+    
+    if (!dtIni || !dtFim) return;
+    
+    // Formata DD/MM/YYYY
+    var formatDate = function(date) {
+      var dia = String(date.getDate()).padStart(2, '0');
+      var mes = String(date.getMonth() + 1).padStart(2, '0');
+      var ano = date.getFullYear();
+      return dia + '/' + mes + '/' + ano;
+    };
+    
+    var dtIniStr = formatDate(dtIni);
+    var dtFimStr = formatDate(dtFim);
+    
+    // Atualiza estado
+    state.dateRange.dtIni = dtIniStr;
+    state.dateRange.dtFim = dtFimStr;
+    
+    // Atualiza input visual
+    if (d.$inputDateRange) {
+      d.$inputDateRange.value = dtIniStr + ' - ' + dtFimStr;
+    }
+    
+    // Atualiza Litepicker se existir
+    if (datePicker && typeof datePicker.setDateRange === 'function') {
+      datePicker.setDateRange(dtIni, dtFim);
+    }
+    
+    // Atualiza visual dos botões
+    atualizarBotoesAtivos(tipo);
+    
+    // NÃO recarrega automaticamente - usuário clica em PESQUISAR
+    console.log('📅 Período selecionado:', dtIniStr, '-', dtFimStr, '(clique em Pesquisar para aplicar)');
+  }
+
+  function bindDateQuickButtons() {
+    var d = DASH.dom;
+    if (!d.$dateQuickButtons) return;
+    
+    var botoes = d.$dateQuickButtons.querySelectorAll('.date-quick-btn');
+    for (var i = 0; i < botoes.length; i++) {
+      (function(btn) {
+        btn.addEventListener('click', function() {
+          var tipo = btn.getAttribute('data-range');
+          if (tipo) {
+            aplicarPeriodoRapido(tipo);
+          }
+        });
+      })(botoes[i]);
+    }
+  }
+
+  // ============================================================
+  // EXECUTAR PESQUISA
+  // ============================================================
+  function executarPesquisa() {
+    var d = DASH.dom;
+    var state = DASH.state;
+    
+    // Feedback visual
+    if (d.$btnPesquisar) {
+      d.$btnPesquisar.classList.add('is-loading');
+    }
+    
+    // Captura valor atual da busca global
+    if (d.$globalSearch) {
+      state.globalSearch = d.$globalSearch.value;
+    }
+
+    
+    // Log para debug
+    console.log('🔍 Executando pesquisa LOCAL:');
+    console.log('   - Texto:', state.globalSearch || '(vazio)');
+    console.log('   - Período DTNEG:', state.dateRange.dtIni, '-', state.dateRange.dtFim);
+    console.log('   - DATA_FULL possui:', DASH.DATA_FULL.length, 'registros');
+    
+    // Verifica se já tem dados carregados
+    if (DASH.DATA_FULL && DASH.DATA_FULL.length > 0) {
+      // FILTRO LOCAL (instantâneo)
+      DASH.aplicarFiltrosLocais();
+    } else {
+      // Primeira carga: vai no banco
+      console.log('⚠️ DATA_FULL vazio, carregando do banco...');
+      DASH.loadData('todos');
+    }
+    
+    // Remove loading
+    setTimeout(function() {
+      if (d.$btnPesquisar) {
+        d.$btnPesquisar.classList.remove('is-loading');
+      }
+    }, 100);
+  }
+
+  function bindBtnPesquisar() {
+    var d = DASH.dom;
+    if (!d.$btnPesquisar) return;
+    
+    d.$btnPesquisar.addEventListener('click', function() {
+      executarPesquisa();
+    });
+  }
+
+  // ============================================================
+  // CLEAR DATE RANGE
+  // ============================================================
+  function clearDateRange() {
+    var d = DASH.dom;
+    var state = DASH.state;
+    
+    state.dateRange.dtIni = null;
+    state.dateRange.dtFim = null;
+    
+    if (d.$inputDateRange) {
+      d.$inputDateRange.value = '';
+    }
+    
+    if (datePicker) {
+      datePicker.clearSelection();
+    }
+    
+    limparBotoesAtivos();
+    
+    // Aplica filtro local (remove filtro de período)
+    if (DASH.DATA_FULL && DASH.DATA_FULL.length > 0) {
+      DASH.aplicarFiltrosLocais();
+    }
+  }
+
+  // Expõe no namespace DASH (evita poluir window)
+  DASH.clearDateRange = clearDateRange;
+  DASH.limparBotoesAtivos = limparBotoesAtivos;
+
+
+  // ============================================================
+  // INICIALIZAÇÃO
+  // ============================================================
+  DASH.init = function() {
+    DASH.cacheDom();
+    DASH.initFilters();
+    DASH.bindFilterEvents();
+
+
+    bindToolbar();
+    bindPagination();
+    bindColumnsMenu();
+    bindGlobalEvents();
+    bindDateQuickButtons();
+    bindBtnPesquisar();
+    initDatePicker();
+
+    DASH.loadData('todos');
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', DASH.init);
+  } else {
+    DASH.init();
+  }
+
+})();
+
+
+</script>
+</body>
+</html>
